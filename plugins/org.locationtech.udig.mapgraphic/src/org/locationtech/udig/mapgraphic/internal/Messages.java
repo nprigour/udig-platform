@@ -48,8 +48,6 @@ public class Messages extends NLS {
     public static String OtherAction_wizardTitle;
     public static String LocationStyleConfigurator_height;
     public static String LocationStyleConfigurator_width;
-    public static String LocationStyleConfigurator_y;
-    public static String LocationStyleConfigurator_x;
     public static String ScalebarMapGraphic_zoomInRequiredMessage;
     public static String ScalebarStyleConfigurator_verticalAlignment;
     public static String ScalebarStyleConfigurator_horizontalAlignment;
@@ -59,7 +57,8 @@ public class Messages extends NLS {
     public static String ScalebarStyleConfigurator_bottom;
     public static String ScalebarStyleConfigurator_middle;
     public static String ScalebarStyleConfigurator_top;
-	public static String ScaleDenomStyleConfigurator_DrawBackground;
+    public static String ScaleDenomStyleConfigurator_DrawBackground;
+    public static String ScaleDenomStyleConfigurator_labelPrefix;
     public static String Font_ExampleText;
     public static String GridMapGraphic_grids_too_close;
     public static String UnitListener_MixedUnits;
