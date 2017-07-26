@@ -641,80 +641,67 @@ public class FeatureUtils {
         return true;
     }
 
-    /**
-     * Performs a lookup for the provided propertyName in the {@link FeatureType}. Matching process
-     * finds case sensitive attribute first, after that case insensitive comparison returns the
-     * first matching attribute
-     *
-     * @param featureType FeatureType to find named attribute
-     * @param propertyName attribute name
-     * @return the actual propertyName (case sensitive) or null if none is found
-     * @throws IllegalArgumentException if featureType and/or property is null/empty
-     */
-    public static String getActualPropertyName(final SimpleFeatureType featureType,
-            final String propertyName) {
+	/**
+	 * Performs a case insensitive lookup for the provided propertyName in the {@link FeatureType}.
+	 * 
+	 * 
+	 * @param featureType
+	 * @param propertyName
+	 * @return the actual propertyName (case sensitive) or null if none is found  
+	 */
+	public static String getActualPropertyName(final SimpleFeatureType featureType, final String propertyName) {
 
-        if (featureType == null) {
-            throw new IllegalArgumentException("featureType cannot be null");
-        }
-        if (propertyName == null) {
-            throw new IllegalArgumentException("propertyName cannot be null");
-        }
+		assert featureType != null : "featureType cannot be null";
+		assert propertyName != null : "propertyName != cannot be null";
 
-        // if an exact match is found return it
-        for (int i = 0; i < featureType.getAttributeCount(); i++) {
-            String name = featureType.getDescriptor(i).getLocalName();
-            if (propertyName.equals(name)) {
-                return name;
-            }
-        }
+		//if an exact match is found return it
+		for (int i = 0; i < featureType.getAttributeCount(); i++) {
+			String name = featureType.getDescriptor(i).getLocalName();
+			if (propertyName.equals(name)) {
+				return name;
+			}
+		}
+		
+		//otherwise return the first match found by performing a case 
+		//insensitive check for equality 
+		for (int i = 0; i < featureType.getAttributeCount(); i++) {
+			String name = featureType.getDescriptor(i).getLocalName();
+			if (propertyName.equalsIgnoreCase(name)) {
+				return name;
+			}
+		}
+		return null;
+	}
 
-        // otherwise return the first match found by performing a case
-        // insensitive check for equality
-        for (int i = 0; i < featureType.getAttributeCount(); i++) {
-            String name = featureType.getDescriptor(i).getLocalName();
-            if (propertyName.equalsIgnoreCase(name)) {
-                return name;
-            }
-        }
-        return null;
-    }
+	
+	/**
+	 * Performs a case insensitive lookup for the provided propertyNames in the {@link FeatureType}.
+	 * 
+	 * @param featureType
+	 * @param propertyName
+	 * @return a list of actual propertyName (case sensitive). If a propertyName is not present
+	 * 			then it is skipped from the list  
+	 */
+	public static List<String> getActualPropertyName(final SimpleFeatureType featureType, final List<String> propertyNames) {
 
-    /**
-     * Performs a lookup for the provided propertyNames in the {@link FeatureType} using
-     * {@link #getActualPropertyName(SimpleFeatureType, String)} approach
-     *
-     * @param featureType  FeatureType to find named attribute
-     * @param propertyName List of Properties to check
-     * @return a list of actual propertyName (case sensitive). If a propertyName is not present then
-     *         it is skipped from the list
-     * @throws IllegalArgumentException if featureType and/or propertyNames is null
-     */
-    public static List<String> getActualPropertyName(final SimpleFeatureType featureType,
-            final List<String> propertyNames) {
+		assert featureType != null : "featureType cannot be null";
+		assert propertyNames != null : "propertyName != cannot be null";
 
-        if (featureType == null) {
-            throw new IllegalArgumentException("featureType cannot be null");
-        }
-        if (propertyNames == null || propertyNames.isEmpty()) {
-            throw new IllegalArgumentException("propertyName cannot be null / empty");
-        }
-
-        List<String> nameList = new LinkedList<String>();
-
-        for (String property : propertyNames) {
-            String name = getActualPropertyName(featureType, property);
-            if (name != null) {
-                nameList.add(name);
-            }
-        }
-        return nameList;
-    }
-
+		List<String> nameList = new LinkedList<String>();
+		
+		for (String property : propertyNames) {
+			String name = getActualPropertyName(featureType, property);
+			if (name != null) {
+				nameList.add(name);
+			}
+		}
+		return nameList;
+	}
+	
    public static Set<Identifier> stringToId(FilterFactory fac, String fid) {
 	   return stringToId(fac, Collections.singleton(fid));
 	}
-
+   
    public static Set<Identifier> stringToId(FilterFactory fac, Collection<String> fid) {
 		Set<Identifier> ids = new HashSet<Identifier>();
 		for (String string : fid) {
