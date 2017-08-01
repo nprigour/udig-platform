@@ -696,8 +696,8 @@ public class FeatureUtils {
         if (featureType == null) {
             throw new IllegalArgumentException("featureType cannot be null");
         }
-        if (propertyNames == null || propertyNames.isEmpty()) {
-            throw new IllegalArgumentException("propertyName cannot be null / empty");
+        if (propertyNames == null) {
+            throw new IllegalArgumentException("propertyName cannot be null");
         }
 
         List<String> nameList = new LinkedList<String>();
