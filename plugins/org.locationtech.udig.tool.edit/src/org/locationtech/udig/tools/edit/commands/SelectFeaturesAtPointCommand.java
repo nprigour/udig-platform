@@ -83,11 +83,11 @@ public class SelectFeaturesAtPointCommand extends AbstractCommand implements Und
 
     // The size of the box that is searched.  This is a 7x7 box of pixels by default.  
     private int SEARCH_SIZE = Platform.getPreferencesService().getInt(
-            ProjectUIPlugin.ID, PreferenceConstants.FEATURE_SELECTION_RADIUS, 7, null);
+            ProjectUIPlugin.ID, PreferenceConstants.FEATURE_SELECTION_RADIUS, PreferenceConstants.DEFAULT_FEATURE_SELECTION_SCALEFACTOR, null);
 
     // The attribute name to be used when multiple features are retrieved.  
     private String ATTRIBUTE_NAME = Platform.getPreferencesService().getString(
-            ProjectUIPlugin.ID, PreferenceConstants.FEATURE_ATTRIBUTE_NAME, "ID", null);
+            ProjectUIPlugin.ID, PreferenceConstants.FEATURE_ATTRIBUTE_NAME, "id", null);
 
     private EditToolHandler handler;
     private final Set<Class< ? extends Geometry>> acceptableClasses = new HashSet<Class< ? extends Geometry>>();

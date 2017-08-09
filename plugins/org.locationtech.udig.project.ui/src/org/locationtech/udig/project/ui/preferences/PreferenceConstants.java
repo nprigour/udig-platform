@@ -10,7 +10,6 @@
  */
 package org.locationtech.udig.project.ui.preferences;
 
-
 /**
  * Constants used to access project preferences.
  */
@@ -71,5 +70,11 @@ public interface PreferenceConstants {
      * The radius to be used during UI single feature selection search like commands (select, edit etc.). 
      */
     public static final String FEATURE_SELECTION_RADIUS = "featureSelectionRadius"; //$NON-NLS-1$
+
+    /**
+     * default scale factor for point selection tool (Default is {@value #DEFAULT_FEATURE_SELECTION_SCALEFACTOR})
+     * see <code>IAbstractContext.getBoundingBox( Point screenLocation, int scalefactor)</code>
+     */
+    public static final int DEFAULT_FEATURE_SELECTION_SCALEFACTOR = 6;
 
 }

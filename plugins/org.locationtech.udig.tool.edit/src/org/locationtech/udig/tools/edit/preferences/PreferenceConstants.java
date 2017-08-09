@@ -27,4 +27,7 @@ public class PreferenceConstants {
     
     public static final String P_DELETE_TOOL_RADIUS = "P_DELETE_TOOL_RADIUS"; //$NON-NLS-1$
     public static final String P_DELETE_TOOL_CONFIRM = "P_DELETE_TOOL_CONFIRM"; //$NON-NLS-1$
+
+    public static final int P_DEFAULT_DELETE_SEARCH_SIZE = 6;
+
 }

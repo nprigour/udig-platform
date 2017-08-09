@@ -10,6 +10,7 @@
  */
 package org.locationtech.udig.tool.select;
 
+import org.locationtech.udig.project.ui.preferences.PreferenceConstants;
 import org.locationtech.udig.tool.select.internal.SelectionToolPreferencePage;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
@@ -25,6 +26,9 @@ public class SelectionToolPreferenceInitializer extends AbstractPreferenceInitia
     public void initializeDefaultPreferences() {
         Preferences node = DefaultScope.INSTANCE.getNode(SelectPlugin.ID);        
         node.putBoolean(SelectionToolPreferencePage.NAVIGATE_SELECTION,true);
+
+        node.putInt(PreferenceConstants.FEATURE_SELECTION_RADIUS,
+                PreferenceConstants.DEFAULT_FEATURE_SELECTION_SCALEFACTOR);
     }
 
 }
