@@ -50,16 +50,6 @@ import com.vividsolutions.jts.geom.Envelope;
  */
 public class DeleteTool extends AbstractModalTool implements ModalTool {
 
-    // The attribute name to be used when multiple features are retrieved.  
-    // if attribute does not exist in FeatureType then the FID value is used
-    private String ATTRIBUTE_NAME;
-
-    // The size of the box that is searched during deletion operations.  
-    private int DELETE_SEARCH_SIZE;
-
-    // boolean flag indicating whether a confirm message should be issued during deletion.  
-    private boolean DELETE_CONFIRM;
-    
     /**
      * Construct <code>DeleteTool</code>.
      *
@@ -72,15 +62,7 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
     @Override
     public void setActive(final boolean active) {
         super.setActive(active);
-        
-        DELETE_SEARCH_SIZE = Platform.getPreferencesService().getInt(
-                EditPlugin.ID, PreferenceConstants.P_DELETE_TOOL_RADIUS, PreferenceConstants.P_DEFAULT_DELETE_SEARCH_SIZE, null);
-        DELETE_CONFIRM = Platform.getPreferencesService().getBoolean(
-                EditPlugin.ID, PreferenceConstants.P_DELETE_TOOL_CONFIRM, true, null);
-        
-        ATTRIBUTE_NAME = Platform.getPreferencesService().getString(
-                ProjectUIPlugin.ID, org.locationtech.udig.project.ui.preferences.PreferenceConstants.FEATURE_ATTRIBUTE_NAME, "id", null); //$NON-NLS-1$
-        
+
         setStatusBarMessage(active);
     }
 
@@ -136,6 +118,12 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
             return;
         FeatureIterator<SimpleFeature> reader = null;
         try {
+            int deleteSearchSize = Platform.getPreferencesService().getInt(
+                    EditPlugin.ID, PreferenceConstants.P_DELETE_TOOL_RADIUS, PreferenceConstants.P_DEFAULT_DELETE_SEARCH_SIZE, null);
+            final boolean deleteConfirm = Platform.getPreferencesService().getBoolean(
+                    EditPlugin.ID, PreferenceConstants.P_DELETE_TOOL_CONFIRM, true, null);
+            final String featureAttributeName = Platform.getPreferencesService().getString(
+                    ProjectUIPlugin.ID, org.locationtech.udig.project.ui.preferences.PreferenceConstants.FEATURE_ATTRIBUTE_NAME, "id", null); //$NON-NLS-1$
 
             ILayer layer = getContext().getEditManager().getSelectedLayer();
             if (layer == null)
@@ -144,7 +132,7 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
             if (layer == null)
                 throw new Exception("No layers in map"); //$NON-NLS-1$
 
-            Envelope env = getContext().getBoundingBox(e.getPoint(), DELETE_SEARCH_SIZE);
+            Envelope env = getContext().getBoundingBox(e.getPoint(), deleteSearchSize);
             FeatureCollection<SimpleFeatureType, SimpleFeature>  results = getContext().getFeaturesInBbox(
                     layer,
                     env);
@@ -172,7 +160,7 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
             final SimpleFeature[] features = results.toArray(new SimpleFeature[]{});
             if (features.length == 1) {
                 SimpleFeature feature=features[0];
-                if (DELETE_CONFIRM && !MessageDialog.openConfirm(null, "", MessageFormat.format(
+                if (deleteConfirm && !MessageDialog.openConfirm(null, "", MessageFormat.format(
                         Messages.DeleteTool_confirmation_text2, feature.getIdentifier()))) {
                     return;
                 }
@@ -186,7 +174,7 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
                     @Override
                     public void run() {
                         final String attribName = FeatureUtils.getActualPropertyName(
-                                features[0].getFeatureType(), ATTRIBUTE_NAME);
+                                features[0].getFeatureType(), featureAttributeName);
                         for (final SimpleFeature feat : features) {
                             MenuItem item = new MenuItem(menu, SWT.PUSH);
                             //SimpleFeature feature=iter.next();
@@ -197,7 +185,7 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
 
                                 @Override
                                 public void widgetSelected(SelectionEvent e) {
-                                    if (DELETE_CONFIRM && !MessageDialog.openConfirm(null, "", MessageFormat.format(
+                                    if (deleteConfirm && !MessageDialog.openConfirm(null, "", MessageFormat.format(
                                             Messages.DeleteTool_confirmation_text2, feat.getIdentifier()))) {
                                         return;
                                     }

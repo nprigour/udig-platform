@@ -55,7 +55,7 @@ public class SelectionToolPreferencePage extends FieldEditorPreferencePage imple
         // create a link to general tooling preferences page
         PreferenceLinkArea preferenceLinkArea = new PreferenceLinkArea(parent, SWT.WRAP | SWT.MULTI,
                 "org.locationtech.udig.project.ui.preferences.tool",
-                Messages.PREFERENCES_LINK_TO_GENERAL_PAGE,
+                org.locationtech.udig.project.ui.internal.Messages.PREFERENCES_LINK_TO_GENERAL_PAGE,
                 (IWorkbenchPreferenceContainer) getContainer(), null);
         preferenceLinkArea.getControl()
                 .setLayoutData(GridDataFactory.fillDefaults().hint(150, SWT.DEFAULT).create());

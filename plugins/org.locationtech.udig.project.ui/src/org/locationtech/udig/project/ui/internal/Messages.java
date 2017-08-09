@@ -676,7 +676,7 @@ public class Messages extends NLS {
     
     public static String Feature_Selection_Radius_tooltip;
 
-
+    public static String PREFERENCES_LINK_TO_GENERAL_PAGE;
 
     static {
         // initialize resource bundle
