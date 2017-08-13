@@ -77,7 +77,7 @@ public class ArrowSelectionWithPopup extends AbstractModalTool implements ModalT
 
         if( e.x==x && e.y==y ){
             final int selectionSearchSize = Platform.getPreferencesService().getInt(
-                    ProjectUIPlugin.ID, PreferenceConstants.FEATURE_SELECTION_RADIUS, PreferenceConstants.DEFAULT_FEATURE_SELECTION_SCALEFACTOR, null);
+                    ProjectUIPlugin.ID, PreferenceConstants.FEATURE_SELECTION_SCALEFACTOR, PreferenceConstants.DEFAULT_FEATURE_SELECTION_SCALEFACTOR, null);
             
             final String featureAttributeName = Platform.getPreferencesService().getString(
                     ProjectUIPlugin.ID, PreferenceConstants.FEATURE_ATTRIBUTE_NAME, "id", null); //$NON-NLS-1$

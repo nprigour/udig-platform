@@ -30,7 +30,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
                 
         //added for finer control of certain map actions
         //node.put(PreferenceConstants.FEATURE_ATTRIBUTE_NAME, "name");
-        store.setDefault(PreferenceConstants.FEATURE_SELECTION_RADIUS,6);
+        store.setDefault(PreferenceConstants.FEATURE_SELECTION_SCALEFACTOR,6);
     }
 
 }

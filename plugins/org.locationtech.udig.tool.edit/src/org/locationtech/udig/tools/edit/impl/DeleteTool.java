@@ -119,7 +119,7 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
         FeatureIterator<SimpleFeature> reader = null;
         try {
             int deleteSearchSize = Platform.getPreferencesService().getInt(
-                    EditPlugin.ID, PreferenceConstants.P_DELETE_TOOL_RADIUS, PreferenceConstants.P_DEFAULT_DELETE_SEARCH_SIZE, null);
+                    EditPlugin.ID, PreferenceConstants.P_DELETE_TOOL_SEARCH_SCALEFACTOR, PreferenceConstants.P_DEFAULT_DELETE_SEARCH_SCALEFACTOR, null);
             final boolean deleteConfirm = Platform.getPreferencesService().getBoolean(
                     EditPlugin.ID, PreferenceConstants.P_DELETE_TOOL_CONFIRM, true, null);
             final String featureAttributeName = Platform.getPreferencesService().getString(

@@ -55,7 +55,7 @@ public class DeleteToolPreferences extends FieldEditorPreferencePage implements 
     @Override
     protected void createFieldEditors() {
     
-        featureDeleteRadius = new IntegerFieldEditor(PreferenceConstants.P_DELETE_TOOL_RADIUS, Messages.DeleteToolPreferences_Delete_Radius, getFieldEditorParent());
+        featureDeleteRadius = new IntegerFieldEditor(PreferenceConstants.P_DELETE_TOOL_SEARCH_SCALEFACTOR, Messages.DeleteToolPreferences_Delete_Radius, getFieldEditorParent());
         addField(featureDeleteRadius);
         featureDeleteRadius.getLabelControl(getFieldEditorParent()).setToolTipText(Messages.DeleteToolPreferences_Delete_Radius_tooltip);
         addField(new BooleanFieldEditor(PreferenceConstants.P_DELETE_TOOL_CONFIRM, Messages.DeleteTool_confirmation_title,

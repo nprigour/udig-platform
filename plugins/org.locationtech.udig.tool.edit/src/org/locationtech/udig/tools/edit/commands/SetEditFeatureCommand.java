@@ -48,7 +48,7 @@ public class SetEditFeatureCommand extends AbstractCommand implements UndoableMa
 
     // The size of the box that is searched.  This is a 7x7 box of pixels by default.  
     private int SEARCH_SIZE = Platform.getPreferencesService().getInt(
-            ProjectUIPlugin.ID, PreferenceConstants.FEATURE_SELECTION_RADIUS, 7, null);
+            ProjectUIPlugin.ID, PreferenceConstants.FEATURE_SELECTION_SCALEFACTOR, 7, null);
 
     EditToolHandler handler;
     Point clickPoint;

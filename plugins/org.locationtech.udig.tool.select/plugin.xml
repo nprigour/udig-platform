@@ -172,7 +172,7 @@
             point="org.eclipse.ui.preferencePages">
          <page
                category="org.locationtech.udig.project.ui.preferences.tool"
-               class="org.locationtech.udig.tool.select.internal.SelectionToolPreferencePage"
+               class="org.locationtech.udig.tool.select.preferences.SelectionToolPreferencePage"
                id="org.locationtech.udig.tool.select.page"
                name="%selection.page">
          </page>
@@ -180,7 +180,7 @@
       <extension
             point="org.eclipse.core.runtime.preferences">
          <initializer
-               class="org.locationtech.udig.tool.select.SelectionToolPreferenceInitializer">
+               class="org.locationtech.udig.tool.select.preferences.SelectionToolPreferenceInitializer">
          </initializer>
       </extension>
       <extension
