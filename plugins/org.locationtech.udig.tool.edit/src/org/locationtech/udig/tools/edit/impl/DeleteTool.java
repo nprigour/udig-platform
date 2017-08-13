@@ -211,12 +211,15 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
 
     private void doDeleteFeature(final boolean deleteConfirm, final String featureAttributeName,
             final ILayer layer, final SimpleFeature feature) {
-        final String attribName = FeatureUtils.getActualPropertyName(feature.getFeatureType(),
-                featureAttributeName);
-        final Object attribValue = feature != null ? feature.getAttribute(attribName) : null;
+        if (feature == null) {
+            return;
+        }
+        final String attribName = (featureAttributeName == null ? null : FeatureUtils.getActualPropertyName(feature.getFeatureType(),
+                featureAttributeName));
+        final Object attribValue = (attribName != null ? feature.getAttribute(attribName) : feature.getIdentifier());
         if (deleteConfirm && !MessageDialog.openConfirm(null, "",
                 MessageFormat.format(Messages.DeleteTool_confirmation_text2,
-                        attribValue != null ? attribValue.toString() : feature.getIdentifier()))) {
+                        (attribValue != null ? attribValue.toString() : feature.getIdentifier())))) {
             return;
         }
         MapCommand deleteFeatureCommand = getContext().getEditFactory().createDeleteFeature(feature,
