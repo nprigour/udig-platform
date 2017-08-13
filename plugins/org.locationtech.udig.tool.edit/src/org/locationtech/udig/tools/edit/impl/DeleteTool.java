@@ -159,13 +159,7 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
 
             final SimpleFeature[] features = results.toArray(new SimpleFeature[]{});
             if (features.length == 1) {
-                SimpleFeature feature=features[0];
-                if (deleteConfirm && !MessageDialog.openConfirm(null, "", MessageFormat.format(
-                        Messages.DeleteTool_confirmation_text2, feature.getIdentifier()))) {
-                    return;
-                }
-                MapCommand deleteFeatureCommand = getContext().getEditFactory().createDeleteFeature(feature, layer);
-                getContext().sendASyncCommand(deleteFeatureCommand);
+                doDeleteFeature(deleteConfirm, featureAttributeName, layer, features[0]);
             } else {
                 final Menu menu = new Menu(((ViewportPane) e.source).getControl().getShell(), SWT.POP_UP);
                 final ILayer selectedLayer = layer;
@@ -177,21 +171,14 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
                                 features[0].getFeatureType(), featureAttributeName);
                         for (final SimpleFeature feat : features) {
                             MenuItem item = new MenuItem(menu, SWT.PUSH);
-                            //SimpleFeature feature=iter.next();
-                            Object attribValue = attribName != null ? feat.getAttribute(attribName) : null;
+                            final Object attribValue = attribName != null ? feat.getAttribute(attribName) : null;
                             item.setText(attribValue != null ? 
                                     attribValue.toString() : feat.getID());
                             item.addSelectionListener(new SelectionAdapter() {
 
                                 @Override
                                 public void widgetSelected(SelectionEvent e) {
-                                    if (deleteConfirm && !MessageDialog.openConfirm(null, "", MessageFormat.format(
-                                            Messages.DeleteTool_confirmation_text2, feat.getIdentifier()))) {
-                                        return;
-                                    }
-                                    MapCommand deleteFeatureCommand = getContext().getEditFactory().createDeleteFeature(feat, selectedLayer);
-                                    getContext().sendASyncCommand(deleteFeatureCommand);
-
+                                    doDeleteFeature(deleteConfirm, attribName, selectedLayer, feat);
                                 }
                             });
                         }
@@ -219,6 +206,22 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
             draw.setValid( false ); // get us off the draw stack for context.getViewportPane().repaint();
             getContext().getViewportPane().repaint();
         }
+    }
+
+
+    private void doDeleteFeature(final boolean deleteConfirm, final String featureAttributeName,
+            final ILayer layer, final SimpleFeature feature) {
+        final String attribName = FeatureUtils.getActualPropertyName(feature.getFeatureType(),
+                featureAttributeName);
+        final Object attribValue = feature != null ? feature.getAttribute(attribName) : null;
+        if (deleteConfirm && !MessageDialog.openConfirm(null, "",
+                MessageFormat.format(Messages.DeleteTool_confirmation_text2,
+                        attribValue != null ? attribValue.toString() : feature.getIdentifier()))) {
+            return;
+        }
+        MapCommand deleteFeatureCommand = getContext().getEditFactory().createDeleteFeature(feature,
+                layer);
+        getContext().sendASyncCommand(deleteFeatureCommand);
     }
 
 }
