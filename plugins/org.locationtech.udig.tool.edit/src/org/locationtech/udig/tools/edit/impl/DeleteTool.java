@@ -12,11 +12,18 @@ package org.locationtech.udig.tools.edit.impl;
 import java.awt.Point;
 import java.text.MessageFormat;
 
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.action.IStatusLineManager;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 import org.locationtech.udig.core.internal.FeatureUtils;
 import org.locationtech.udig.project.ILayer;
 import org.locationtech.udig.project.command.MapCommand;
@@ -29,16 +36,8 @@ import org.locationtech.udig.project.ui.tool.ModalTool;
 import org.locationtech.udig.tool.edit.internal.Messages;
 import org.locationtech.udig.tools.edit.EditPlugin;
 import org.locationtech.udig.tools.edit.preferences.PreferenceConstants;
-
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.jface.action.IStatusLineManager;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
 
 import com.vividsolutions.jts.geom.Envelope;
 
@@ -84,18 +83,16 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
         });
     }
 
-
     @Override
     public void mousePressed( MapMouseEvent e ) {
         draw.setValid( true ); // make sure context.getViewportPane().repaint() knows about us        
         context.sendASyncCommand( draw ); // should of isValided us       
         feedback( e );
-
     }
+
     @Override
     public void mouseDragged( MapMouseEvent e ) {
         feedback( e );
-
     }
 
     DrawShapeCommand draw = new DrawShapeCommand();
@@ -111,7 +108,6 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
 
         super.mouseDragged(e);
     }
-
 
     public void mouseReleased( MapMouseEvent e ) {
         if( getContext().getMapLayers().size()==0 )
@@ -164,7 +160,6 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
                 final Menu menu = new Menu(((ViewportPane) e.source).getControl().getShell(), SWT.POP_UP);
                 final ILayer selectedLayer = layer;
                 Display.getDefault().asyncExec(new Runnable() {
-
                     @Override
                     public void run() {
                         final String attribName = FeatureUtils.getActualPropertyName(
@@ -175,7 +170,6 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
                             item.setText(attribValue != null ? 
                                     attribValue.toString() : feat.getID());
                             item.addSelectionListener(new SelectionAdapter() {
-
                                 @Override
                                 public void widgetSelected(SelectionEvent e) {
                                     doDeleteFeature(deleteConfirm, attribName, selectedLayer, feat);
@@ -186,10 +180,7 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
                         //((ViewportPane) e.source).getControl().setMenu(menu);
                         //just make the menu visible (do not add it to a control since it will affect already existing menus)
                         menu.setVisible(true);
-
-
                     }
-
                 });
             }
 
