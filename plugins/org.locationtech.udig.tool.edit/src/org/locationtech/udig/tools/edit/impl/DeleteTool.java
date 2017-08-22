@@ -206,7 +206,7 @@ public class DeleteTool extends AbstractModalTool implements ModalTool {
         }
         final String attribName = (featureAttributeName == null ? null : FeatureUtils.getActualPropertyName(feature.getFeatureType(),
                 featureAttributeName));
-        final Object attribValue = (attribName != null ? feature.getAttribute(attribName) : feature.getIdentifier());
+        final Object attribValue = (attribName != null ? feature.getAttribute(attribName) : null);
         if (deleteConfirm && !MessageDialog.openConfirm(null, "",
                 MessageFormat.format(Messages.DeleteTool_confirmation_text2,
                         (attribValue != null
