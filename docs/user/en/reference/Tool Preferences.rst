@@ -8,7 +8,7 @@ Tool Preferences
 Available Preferences
 ~~~~~~~~~~~~~~~~~~~~~
 
--  default feature attribute - name of feature attribute to be displayed in popup when multiple features are detected (case insensitive)
+-  Default Feature Attribute - name of feature attribute to be displayed in popup when multiple features are detected (case insensitive)
 
 .. toctree::
    :maxdepth: 1
