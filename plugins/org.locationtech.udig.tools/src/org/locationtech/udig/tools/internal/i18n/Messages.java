@@ -26,6 +26,68 @@ import org.eclipse.osgi.util.NLS;
 public class Messages extends NLS {
     private static final String BUNDLE_NAME = Messages.class.getPackage().getName() + ".messages"; //$NON-NLS-1$
 
+    public static String FeatureClipWizard_feature_clip;
+
+    public static String ClipFeaturesComposite_failed_creating_clip_feature;
+
+    public static String ClipFeaturesComposite_feature;
+
+    public static String ClipFeaturesComposite_clip_feature;
+
+    public static String ClipFeaturesComposite_clip_result_title;
+
+    public static String ClipFeaturesComposite_property;
+
+    public static String ClipFeaturesComposite_result;
+
+    public static String ClipFeaturesComposite_result_geometry;
+
+    public static String ClipFeaturesComposite_result_will_be;
+
+    public static String ClipFeaturesComposite_source;
+
+    public static String ClipFeaturesComposite_value;
+
+    public static String ClipTool_failed_executing;
+
+    public static String ClipTool_failed_getting_selection;
+
+    public static String ClipTool_failed_rollback;
+
+    public static String ClipTool_select_features_to_clip;
+
+    public static String ClipTool_successful;
+    
+    public static String ClipTool_geometry_not_changed;
+    
+	public static String ClipTool_multi_size_geom_detected;
+	
+	public static String ClipTool_allow_multiarray_geom_option_tooltip;
+
+    public static String ClipTool_title_tool;
+    
+    public static String ClipFeatureBehaviour_select_two_or_more;
+
+    public static String ClipFeatureBehaviour_must_intersect;
+
+    public static String ClipFeatureBehaviour_dialog_error_title;
+    
+    public static String ClipView_cancel_tool_tip;
+
+    public static String ClipView_finish_tool_tip;
+    
+    public static String ClipFeatureBehaviour_select_one_or_more;
+
+    public static String ClipFeatureView_no_feature_to_delete;
+
+    public static String ClipFeatureView_cant_remove;
+
+    public static String ClipView_remove_tool_tip;
+
+    public static String ClipView_remove_text;
+    
+    public static String ClipFeatureBuilder_dialog_clear_msg;
+    
     public static String FeatureMergeWizard_feature_merge;
 
     public static String MergeFeaturesComposite_failed_creating_merge_feature;
@@ -259,7 +321,6 @@ public class Messages extends NLS {
     public static String TrimGeometryStrategy_trimming_line_intersect_one_point;
     
     
-
     static {
         // initialize resource bundle
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
