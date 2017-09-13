@@ -109,6 +109,11 @@
             name="%box.box.printer"
             visible="true">
       </boxprinter>
+      <boxprinter
+            class="org.locationtech.udig.printing.model.impl.ImageBoxPrinter"
+            name="%image.box.name "
+            visible="true">
+      </boxprinter>
    </extension>
    
 
@@ -262,6 +267,14 @@
                 name="%bringtobackAction.label">
           </editAction>
        </editActionGroup>
+       <editActionGroup
+            acceptable="org.locationtech.udig.printing.model.impl.ImageBoxPrinter">
+         <editAction
+               class="org.locationtech.udig.printing.ui.internal.editor.SetImageAction"
+               id="setImageAction"
+               name="Select Image">
+         </editAction>
+      </editActionGroup>
        <editActionGroup
              acceptable="org.locationtech.udig.printing.model.impl.RectangleEllipseBoxPrinter">
           <editAction

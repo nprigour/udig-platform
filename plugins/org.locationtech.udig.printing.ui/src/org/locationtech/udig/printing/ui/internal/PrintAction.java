@@ -92,7 +92,7 @@ public class PrintAction extends Action implements IEditorActionDelegate {
 
                 engine.setMonitor(monitor);
 
-                boolean printToPdf = engine.printToPdf();
+                boolean printToPdf = engine.print();
                 if (printToPdf) {
                     return Status.OK_STATUS;
                 } else {

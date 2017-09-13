@@ -56,10 +56,29 @@ import com.vividsolutions.jts.geom.Envelope;
  * @since 1.1.0
  */
 public class MapBoxPrinter extends AbstractBoxPrinter implements IAdaptable {
+    
+    protected static final int DEFAULTDPI = 72;
+    
     Map map;
     
+    //used this for multiple prints without copying original Map each time
+    //(Note: using this alleviates a memory leak problem that seems to exist 
+    //when draw is called)
+    private  IMap internalMap = null;
+    
+    //indicates whether the internal map will be used during drawing process
+    private boolean useInternalMap = false;
+    
+    //indicates whether a new copy of the map will be created when draw 
+    //method is called (applies only when internalMap is used).
+    private boolean doCopyMapOnDraw = false;
+    
+    //the scale denom to be used (must be set to a value either than -1 if
+    //prints based on scale value are to be made.
     private double scaleDenom;
+    
     private SelectionStyle selectionStyle; 
+    private int usedDpi = DEFAULTDPI;
     
     /**
      * draw a map at the current scale
@@ -199,6 +218,11 @@ public class MapBoxPrinter extends AbstractBoxPrinter implements IAdaptable {
                 layer.addListener(layerListener);
             }
         }
+        
+        //during set perform a copy of the original map
+        //This can be used for calling #draw(...) method without
+        //affecting the original map.
+        internalMap = ApplicationGIS.copyMap(map);
     }
 
     public void draw( Graphics2D graphics, IProgressMonitor monitor ) {
@@ -210,32 +234,50 @@ public class MapBoxPrinter extends AbstractBoxPrinter implements IAdaptable {
             //reduce set a 1 pixel clip bound around outside to prevent 
             //some Graphics2D implementations (itext!) from bleeding into space
             //outside the graphics canvas
-            graphics.setClip(1, 1, size.width-2, size.height-2);
+            //graphics.setClip(1, 1, size.width-2, size.height-2);
             
             java.awt.Dimension awtSize = new java.awt.Dimension(
                     size.width, size.height);
-            IMap modifiedMap = null;
+            
+            IMap printMap = null;
+            //Executes the actual job of drawing the map to an appropriate graphic object
+            //Depending on settings a copy of the map may be created or not. 
+            //Note that if the original map is used then always a copy is created 
+            //(the flag doCopyMapOnDraw is ignored)
+            boolean useSameMap = isUseInternalMap() && !getDoCopyMapOnDraw();
             if (scaleDenom == -1) {
                 //ApplicationGIS.drawMap(new DrawMapParameter(graphics, awtSize, getMap(), monitor, true));
-                modifiedMap = ApplicationGIS.drawMap(new DrawMapParameter(graphics, awtSize, getMap(), null /*use current scale*/, 90, selectionStyle, monitor, true, true));
-            }
-            else {
+                printMap = ApplicationGIS.drawMap(
+                        new DrawMapParameter(graphics, awtSize, 
+                                isUseInternalMap() ? internalMap : map, 
+                                        null /*use current scale*/, usedDpi, selectionStyle, monitor, true, true), 
+                                        useSameMap ? false : true);
+            } else {
                 BoundsStrategy boundsStrategy = new BoundsStrategy(scaleDenom);
-                modifiedMap = ApplicationGIS.drawMap(new DrawMapParameter(graphics, awtSize, getMap(), boundsStrategy, 90, selectionStyle, monitor, true, true));
+                getMap().getBlackboard().put("scale", scaleDenom); //set the scaleDenom to be used by the mapgraphics
+                printMap = ApplicationGIS.drawMap(
+                        new DrawMapParameter(graphics, awtSize, isUseInternalMap() ? internalMap : map, 
+                                boundsStrategy, usedDpi, selectionStyle, monitor, true, true), 
+                                useSameMap ? false : true);
             }
+            System.out.println("Called MapBoxPrinter: Page=" +this.getBox().getPage().hashCode() +  ", MapBoxPrinter=" +this.hashCode() + ", BOX=" +this.getBox().hashCode() + ", MAP SIZE=" + size + "bounds=" + printMap.getViewportModel().getWidth() + "," + printMap.getViewportModel().getHeight());
+            System.out.println("Called MapBoxPrinter: map=" + getMap().hashCode() + " printMap=" +printMap.hashCode());
 
             //ApplicationGIS.drawMap makes a copy of the map, and may change its bounds.  If it does change
             //the bounds then update the original map to match (this will force the mapgraphics to update too)
-            if (!getMap().getViewportModel().getBounds().equals(modifiedMap.getViewportModel().getBounds())) {
-                SetViewportBBoxCommand cmdBBox = new SetViewportBBoxCommand(modifiedMap.getViewportModel().getBounds());
-                getMap().sendCommandSync(cmdBBox);
+            if (!map.getViewportModel().getBounds().equals(printMap.getViewportModel().getBounds())) {
+                SetViewportBBoxCommand cmdBBox = new SetViewportBBoxCommand(printMap.getViewportModel().getBounds());
+                map.sendCommandSync(cmdBBox);
             }
-            
+
             //restore regular clip rectangle
             graphics.setClip(0, 0, size.width, size.height);
-            
+
+
         } catch (RenderException e) {
             PrintingModelPlugin.log(null, e);
+        } finally {
+            
         }
     }
 
@@ -302,12 +344,17 @@ public class MapBoxPrinter extends AbstractBoxPrinter implements IAdaptable {
         System.out.println(map.getID());
         memento.putString("mapId", map.getID().toString()); //$NON-NLS-1$
         memento.putString("projectId", map.getProject().getID().toString()); //$NON-NLS-1$
+        memento.putInteger("scaleDenom", (int) scaleDenom); //$NON-NLS-1$
     }
 
     public void load( IMemento value ) {
         URI mapId = URI.createURI(value.getString("mapId")); //$NON-NLS-1$
         URI projectId = URI.createURI(value.getString("projectId")); //$NON-NLS-1$
-
+        try {
+            scaleDenom = value.getInteger("scaleDenom");
+        } catch (Exception e) {
+        }
+        
         List< ? extends IProject> projects = ApplicationGIS.getProjects();
 
         for( IProject project : projects ) {
@@ -333,6 +380,75 @@ public class MapBoxPrinter extends AbstractBoxPrinter implements IAdaptable {
             return this.map;
         }
         return Platform.getAdapterManager().getAdapter(this, adapter);
+    }
+
+    
+    /**
+     * @return the scaleDenom
+     */
+    public double getScaleDenom() {
+        return scaleDenom;
+    }
+
+    /**
+     * @param scaleDenom the scaleDenom to set
+     */
+    public void setScaleDenom(double scaleDenom) {
+        this.scaleDenom = scaleDenom;
+    }
+
+    /**
+     * @return the selectionStyle
+     */
+    public SelectionStyle getSelectionStyle() {
+        return selectionStyle;
+    }
+
+    /**
+     * @param selectionStyle the selectionStyle to set
+     */
+    public void setSelectionStyle(SelectionStyle selectionStyle) {
+        this.selectionStyle = selectionStyle;
+    }
+
+    /**
+     * @return the usedDpi
+     */
+    public int getUsedDpi() {
+        return usedDpi;
+    }
+
+    /**
+     * @param usedDpi the usedDpi to set
+     */
+    public void setUsedDpi(int usedDpi) {
+        this.usedDpi = usedDpi;
+    }
+
+    public IMap getInternalMap() {
+        return internalMap;
+    }
+
+    /**
+     * @return the useInternalMap
+     */
+    public boolean isUseInternalMap() {
+        return useInternalMap;
+    }
+
+    /**
+     * @param useInternalMap the useInternalMap to set
+     */
+    public void setUseInternalMap(boolean useInternalMap) {
+        this.useInternalMap = useInternalMap;
+    }
+
+    public boolean getDoCopyMapOnDraw() {
+        return doCopyMapOnDraw;
+    }
+
+    public void setDoCopyMapOnDraw(boolean copyMapOnDraw) {
+        this.doCopyMapOnDraw = copyMapOnDraw;
     }
 
 }
