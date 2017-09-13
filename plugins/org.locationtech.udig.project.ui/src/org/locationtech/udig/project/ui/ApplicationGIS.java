@@ -747,56 +747,82 @@ public class ApplicationGIS {
     }
     
     /**
+     * Renders the provided map on to the provided graphics2D object performing always
+     * a copy of the original map
+     * 
+     * @param drawMapParams
+     * @return
+     * @throws RenderException
+     */
+    public static IMap drawMap(final DrawMapParameter drawMapParams) throws RenderException {
+        return drawMap(drawMapParams, true);
+    }
+
+    /**
      * Renders the provided map on to the provided graphics2D object.
      * @param params parameters that describe how and where to draw the map
-     * 
+     * @param mapCopy indication whether a copy of the original map should be
+     *                  performed
      * @throws RenderException
      *             Thrown if an error occurs such as a unreachable server.
      *             
      * @return the map that was rendered.  It will not be saved or and is not part of any project.
      */
-    public static IMap drawMap(final DrawMapParameter drawMapParams) throws RenderException {
+    public static IMap drawMap(final DrawMapParameter drawMapParams, final boolean mapCopy) throws RenderException {
         final DrawMapParameter params = new DrawMapParameter( drawMapParams );
         IProgressMonitor monitor = params.monitor;
-        
-        final Map map = (Map) EcoreUtil.copy((EObject) params.toDraw);
-        
-        map.getBlackboard().addAll(drawMapParams.toDraw.getBlackboard());
-        
-        for (int i = 0; i < map.getMapLayers().size(); i++) {
-            ILayer source = params.toDraw.getMapLayers().get(i);
-            Layer dest = map.getLayersInternal().get(i);
-            dest.setFilter(source.getFilter());
-            dest.getBlackboard().addAll(source.getBlackboard());
+
+        Map tMap = null;
+        if (mapCopy) {
+            tMap = (Map) EcoreUtil.copy((EObject) params.toDraw);
+
+            tMap.getBlackboard().addAll(drawMapParams.toDraw.getBlackboard());
+
+            for (int i = 0; i < tMap.getMapLayers().size(); i++) {
+                ILayer source = params.toDraw.getMapLayers().get(i);
+                Layer dest = tMap.getLayersInternal().get(i);
+                dest.setFilter(source.getFilter());
+                dest.getBlackboard().addAll(source.getBlackboard());
+            }        
+            System.out.println("drawMap with MapCopy: " + tMap.hashCode());
+        } else {
+            tMap = (Map) params.toDraw;   
+            System.out.println("drawMap without MapCopy: " + tMap.hashCode());
         }
-        
+
+        final Map map = tMap;
+        System.out.println("final map: " + map.hashCode());
+
         IRunnableWithProgress runnable = new IRunnableWithProgress() {
 
             public void run(IProgressMonitor monitor)
                     throws InvocationTargetException, InterruptedException {
                 // Load IGeoResources using original map. The new map can't do this because it doesn't have a
                 // Resource(file) and therefore can't resolve relative URIs
-                List<ILayer> layers = drawMapParams.toDraw.getMapLayers();
-                for (ILayer layer : layers) {
-                    layer.getGeoResources();
+                //IS THIS REALLY NEEDED ????
+                if (mapCopy) {
+                    List<ILayer> layers = drawMapParams.toDraw.getMapLayers();
+                    for (ILayer layer : layers) {
+                        layer.getGeoResources();
+                    }
                 }
-                
+
                 Color background = (Color) map.getBlackboard().get(ProjectBlackboardConstants.MAP__BACKGROUND_COLOR);
                 params.graphics.setBackground(background);
                 if (!drawMapParams.transparent) {
                     params.graphics.clearRect(0, 0, params.destinationSize.width, params.destinationSize.height);
                 }
                 List<Layer> layersToRender = params.selectionStyle.handleSelection(map.getLayersInternal());
-                
+
                 ProjectUIPlugin
-                        .trace(
-                                ApplicationGIS.class,
-                                "ApplicationGIS.drawMap() beginning rendering of map '" + map.getName() + "'", null); //$NON-NLS-1$ //$NON-NLS-2$
+                .trace(
+                        ApplicationGIS.class,
+                        "ApplicationGIS.drawMap() beginning rendering of map '" + map.getName() + "'", null); //$NON-NLS-1$ //$NON-NLS-2$
 
                 ReferencedEnvelope bounds = (ReferencedEnvelope) params.toDraw.getViewportModel().getBounds();
                 ReferencedEnvelope boundsCopy = new ReferencedEnvelope(bounds);
                 RenderContext tools = configureMapForRendering(map, params.destinationSize, params.dpi, params.boundsStrategy, boundsCopy);
-                
+
                 RendererCreator decisive = new RendererCreatorImpl();
                 decisive.setContext(tools);
 
@@ -812,15 +838,15 @@ public class ApplicationGIS {
             private void render(final DrawMapParameter params,
                     IProgressMonitor monitor, RendererCreator decisive,
                     SortedSet<RenderContext> sortedContexts)
-                    throws InvocationTargetException {
-                
+                            throws InvocationTargetException {
+
                 monitor.beginTask("Rendering map", sortedContexts.size());
                 RenderContext mainContext = decisive.getContext();
 
                 ILabelPainter labelPainter = mainContext.getLabelPainter();
                 labelPainter.clear();
                 labelPainter.start();
-                
+
                 Dimension displaySize = params.destinationSize;
                 Iterator<RenderContext> iter = sortedContexts.iterator();
                 while (iter.hasNext()) {
@@ -848,9 +874,9 @@ public class ApplicationGIS {
                             continue;
                         Renderer renderer = decisive.getRenderer(context);
                         ProjectUIPlugin
-                                .trace(
-                                        ApplicationGIS.class,
-                                        "Issuing render call to " + renderer.getName(), null); //$NON-NLS-1$
+                        .trace(
+                                ApplicationGIS.class,
+                                "Issuing render call to " + renderer.getName(), null); //$NON-NLS-1$
                         try {
                             Graphics2D graphics = (Graphics2D) params.graphics.create();
                             if (params.doBufferedImageForGrids && isLayerFromGrid) {
@@ -864,7 +890,7 @@ public class ApplicationGIS {
                             }else{
                                 renderer.render(graphics, monitor);
                             }
-                            
+                            graphics.dispose();
                         } catch (RenderException e) {
                             throw new InvocationTargetException(e);
                         }
