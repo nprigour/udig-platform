@@ -20,6 +20,7 @@ import org.locationtech.udig.project.ILayer;
 import org.locationtech.udig.project.Interaction;
 import org.locationtech.udig.project.LayerEvent;
 import org.locationtech.udig.project.ProjectBlackboardConstants;
+import org.locationtech.udig.project.UDIGPrecisionModel;
 import org.locationtech.udig.project.internal.EditManager;
 import org.locationtech.udig.project.internal.Messages;
 import org.locationtech.udig.project.internal.ProjectPlugin;
@@ -40,6 +41,9 @@ import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.opengis.feature.Feature;
+import org.opengis.feature.FeatureVisitor;
+import org.opengis.feature.GeometryAttribute;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
@@ -51,6 +55,7 @@ import org.opengis.filter.identity.FeatureId;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
+import org.locationtech.jts.precision.GeometryPrecisionReducer;
 
 /**
  * A SimpleFeatureStore decorator that does not allow the transaction to be set more than once.
@@ -134,7 +139,9 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
             throws IOException {
         setTransactionInternal();
         if (value instanceof Geometry) {
-            Geometry geom = (Geometry) value;
+            //consider PrecisionModel that may be set
+            Geometry geom = (Geometry) ((UDIGPrecisionModel.getModel() == null) ? 
+                    value : UDIGPrecisionModel.getPrecisionReducer().reduce((Geometry)value));
             if (!geom.isValid()) {
                 WKTWriter writer = new WKTWriter();
                 String wkt = writer.write(geom);
@@ -148,6 +155,7 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
                 ProjectPlugin.log(msg);
                 throw new IOException(msg);
             }
+            value = geom;
         }
         wrapped.modifyFeatures(attribute.getName(), value, selectFilter);
         fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, selectFilter );
@@ -173,6 +181,24 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
     public void setFeatures( FeatureReader<SimpleFeatureType, SimpleFeature> features )
             throws IOException {
         setTransactionInternal();
+
+        //consider PrecisionModel that may be set
+        if (UDIGPrecisionModel.getModel() != null) {
+            final GeometryPrecisionReducer reducer = new GeometryPrecisionReducer(UDIGPrecisionModel.getModel());
+            reducer.setPointwise(true);
+            SimpleFeatureCollection collection = DataUtilities.collection(features);
+            collection.accepts(new FeatureVisitor() {               
+                @Override
+                public void visit(Feature feature) {
+                    GeometryAttribute attrib = feature.getDefaultGeometryProperty();
+                    attrib.setValue(reducer.reduce((
+                            Geometry)feature.getDefaultGeometryProperty().getValue()));
+                    feature.setDefaultGeometryProperty(attrib);
+                }
+            }, null);       
+            features = DataUtilities.reader(collection);
+        }
+        
         wrapped.setFeatures(features);
         fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, Filter.INCLUDE );
     }
@@ -284,6 +310,32 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
     public List<FeatureId> addFeatures( FeatureCollection<SimpleFeatureType, SimpleFeature> features )
             throws IOException {
         setTransactionInternal();
+        
+        //consider PrecisionModel that may be set
+        if (UDIGPrecisionModel.getModel() != null) {
+            final GeometryPrecisionReducer reducer = new GeometryPrecisionReducer(UDIGPrecisionModel.getModel());
+            reducer.setPointwise(true);
+            List<SimpleFeature> featureList = DataUtilities.list(features);
+            for (SimpleFeature feature : featureList) {
+                feature.setDefaultGeometry(reducer.reduce(
+                        (Geometry)feature.getDefaultGeometryProperty().getValue()));
+            }
+            //back to FeatureCollection
+            features = DataUtilities.collection(featureList);
+
+            /*
+            features.accepts(new FeatureVisitor() {         
+                @Override
+                public void visit(Feature feature) {
+                    GeometryAttribute attrib = feature.getDefaultGeometryProperty();
+                    attrib.setValue(reducer.reduce((
+                            Geometry)feature.getDefaultGeometryProperty().getValue()));
+                    feature.setDefaultGeometryProperty(attrib);
+                }
+            }, null);
+             */
+        }
+        
         List<FeatureId> ids = wrapped.addFeatures(features);
         
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
