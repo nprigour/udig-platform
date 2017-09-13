@@ -51,6 +51,7 @@ public class LabelBoxPrinter extends AbstractBoxPrinter {
     private static final String FONT_SCALE_FACTOR = "fontScaleFActor"; //$NON-NLS-1$
     private static final String LABEL_KEY = "label"; //$NON-NLS-1$
     private static final String HORIZ_ALIGN_KEY = "horizontalAlignment"; //$NON-NLS-1$
+    private static final String WRAP_KEY = "wrap"; //$NON-NLS-1$
 
     private String text = "Set Text"; //$NON-NLS-1$
     private int padding;
@@ -263,21 +264,25 @@ public class LabelBoxPrinter extends AbstractBoxPrinter {
             return lines;
         }
 
-        String[] words = text.split(" ");
-        String currentLine = "";
-        for( int i = 0; i < words.length; i++ ) {
+        //consider new line as a row split
+        String[] rows = text.split("\n");
+        for (String row : rows) {
+            String[] words = row.split(" ");
+            String currentLine = "";
+            for( int i = 0; i < words.length; i++ ) {
 
-            String tryLine = (currentLine.equals("")) ? words[i] : (currentLine + " " + words[i]);
-            Rectangle2D lineBounds = graphics.getFontMetrics().getStringBounds(tryLine, graphics);
-            if (lineBounds.getWidth() > availableWidth) {
-                lines.add(currentLine);
-                currentLine = words[i];
-            } else {
-                currentLine = tryLine;
+                String tryLine = (currentLine.equals("")) ? words[i] : (currentLine + " " + words[i]);
+                Rectangle2D lineBounds = graphics.getFontMetrics().getStringBounds(tryLine, graphics);
+                if (lineBounds.getWidth() > availableWidth) {
+                    lines.add(currentLine);
+                    currentLine = words[i];
+                } else {
+                    currentLine = tryLine;
+                }
             }
-        }
-        if (!currentLine.equals("")) {
-            lines.add(currentLine);
+            if (!currentLine.equals("")) {
+                lines.add(currentLine);
+            }
         }
         return lines;
     }
@@ -292,6 +297,7 @@ public class LabelBoxPrinter extends AbstractBoxPrinter {
 
     public void save( IMemento memento ) {
         memento.putString(LABEL_KEY, text);
+        memento.putBoolean(WRAP_KEY, wrap);
         memento.putInteger(HORIZ_ALIGN_KEY, horizontalAlignment);
         if (originalFont != null) {
             memento.putString(FONT_NAME_KEY, originalFont.getFamily());
@@ -312,6 +318,7 @@ public class LabelBoxPrinter extends AbstractBoxPrinter {
 
     public void load( IMemento memento ) {
         text = memento.getString(LABEL_KEY);
+        wrap = memento.getBoolean(WRAP_KEY);
         horizontalAlignment = memento.getInteger(HORIZ_ALIGN_KEY);
         setScaleFactor(memento.getFloat(FONT_SCALE_FACTOR));
         String family = memento.getString(FONT_NAME_KEY);
