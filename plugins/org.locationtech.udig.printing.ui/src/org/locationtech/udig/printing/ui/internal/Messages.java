@@ -76,6 +76,9 @@ public class Messages extends NLS {
 	public static String PageEditorPaletteFactory_controlGroup_title;
 	public static String PageEditor_error_nullEditor;
 	public static String PrintingPreferences_label_defaultTemplate;
+	public static String PrintingPreferences_label_fontDir;
+	public static String PrintingPreferences_label_labels_as_shapes;
+	public static String PrintingPreferences_preferences_description;
 	public static String PrintAction_jobStatus;
 	public static String PrintAction_jobTitle;
 	public static String PrintAction_pageError;
