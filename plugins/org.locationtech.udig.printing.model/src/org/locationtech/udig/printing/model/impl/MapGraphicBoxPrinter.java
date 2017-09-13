@@ -32,6 +32,7 @@ import org.locationtech.udig.printing.model.AbstractBoxPrinter;
 import org.locationtech.udig.printing.model.Box;
 import org.locationtech.udig.printing.model.BoxPrinter;
 import org.locationtech.udig.printing.model.Page;
+import org.locationtech.udig.printing.model.util.EcoreUtilWrapper;
 import org.locationtech.udig.project.ILayer;
 import org.locationtech.udig.project.ILayerListener;
 import org.locationtech.udig.project.IProjectElement;
@@ -53,11 +54,13 @@ import org.locationtech.udig.project.ui.UDIGEditorInput;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+
 import org.geotools.geometry.jts.ReferencedEnvelope;
 
 /**
@@ -68,8 +71,8 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
  */
 public class MapGraphicBoxPrinter extends AbstractBoxPrinter {
 
-    private static final int DEFAULTDPI = 90;
-    private int usedDpi = 90;
+    private static final int DEFAULTDPI = 72;
+    private int usedDpi = 72;
     private float scaleFactor = Float.NaN;
 
     private static final Layer NULL = new LayerDecorator(null);
@@ -77,6 +80,12 @@ public class MapGraphicBoxPrinter extends AbstractBoxPrinter {
     private Layer layer;
     private String warning;
 
+    //should be set if a predefined scale is needed
+    private Integer scaleValue;
+    
+    //hold reference to previous Map in order to delete it.
+    private Map previousMap = null;
+    
     private ILayerListener layerListener = new ILayerListener(){
 
         public void refresh( LayerEvent event ) {
@@ -140,7 +149,14 @@ public class MapGraphicBoxPrinter extends AbstractBoxPrinter {
 
         List<Layer> layers = info.getLeft().getLayersInternal();
         org.eclipse.draw2d.geometry.Dimension size = getBox().getSize();
-        Rectangle rect = new Rectangle(size.width - 1, size.height - 1);
+        
+        //use XPAD_LEFT (address issue with some scalebar types not 
+        //being render correctly due to left clipping)
+        Rectangle rect = new Rectangle(
+                        LocationStyleContent.XPAD_LEFT,
+                        0,
+                        size.width - 1, size.height - 1);
+        
         layer.getStyleBlackboard().put(LocationStyleContent.ID, rect);
         layers.add(layer);
 
@@ -148,7 +164,13 @@ public class MapGraphicBoxPrinter extends AbstractBoxPrinter {
         CompositeRenderContext toUseForRendering = createRenderContext(info, layer);
         renderer.setContext(toUseForRendering);
 
-        renderer.render(graphics, monitor);
+        try {
+            renderer.render(graphics, monitor);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //do noting for the moment
+        }
     }
 
     public void createPreview( Graphics2D graphics, IProgressMonitor monitor ) {
@@ -170,11 +192,11 @@ public class MapGraphicBoxPrinter extends AbstractBoxPrinter {
 
         RenderContext context = null;
         if (inPreviewMode && !Float.isNaN(scaleFactor)) {
-            float dpiFloat = (float) DEFAULTDPI * scaleFactor;
+            float dpiFloat = (float) usedDpi * scaleFactor;
             context = ApplicationGIS.configureMapForRendering(map, size, (int) dpiFloat,
                     boundsStrategy, bounds);
         } else {
-            context = ApplicationGIS.configureMapForRendering(map, size, DEFAULTDPI,
+            context = ApplicationGIS.configureMapForRendering(map, size, usedDpi,
                     boundsStrategy, bounds);
         }
 
@@ -199,14 +221,30 @@ public class MapGraphicBoxPrinter extends AbstractBoxPrinter {
                 Map map = mapBoxPrinter.getMap();
                 Map copy = (Map) EcoreUtil.copy(map);
 
+                //it seems there is a memory leak not allowing garbage
+                //collection of EObject (at least in eclipse 3.8) therefore 
+                //use this helper class to explicitly remove references
+                if (previousMap != null) {
+                    EcoreUtilWrapper.delete((EObject)previousMap, true);
+                }
+                previousMap = copy;
+
                 // we need the original map and its box to correctly calculate the
-                // scale so we must do it now
-                Dimension size = new Dimension(box.getSize().width, box.getSize().height);
+                // scale so we must do it now. Consider scale factor since during 
+                // map print the size of the map box is rescaled to the screen dimensions. 
+                //Dimension size = new Dimension(box.getSize().width, box.getSize().height);
+                float xScale = (float) mapBoxPrinter.getBox().getPage().getPaperSize().width / (float)mapBoxPrinter.getBox().getPage().getSize().width;
+                float yScale = (float) mapBoxPrinter.getBox().getPage().getPaperSize().height / (float) mapBoxPrinter.getBox().getPage().getSize().height;
+                Dimension size = new Dimension((int)(xScale*box.getSize().width), (int)(yScale*box.getSize().height));
+
                 ViewportModel viewportModel = map.getViewportModelInternal();
 
                 ReferencedEnvelope bounds = (ReferencedEnvelope) viewportModel.getBounds();
 
-                double scale = ScaleUtils.calculateScaleDenominator(bounds, size, 90);
+                double scale = scaleValue != null ? scaleValue.doubleValue() : ScaleUtils.calculateScaleDenominator(bounds, size, usedDpi);
+                //System.out.println("Used dpi="+usedDpi);
+                //System.out.println("Called MapGraphicBoxPrinter: scale=" + scale);
+                //System.out.println("set in blackboard " +map.getBlackboard().get("scale"));
 
                 Pair<Dimension, Double> details = new Pair<Dimension, Double>(size, scale);
                 return new Pair<Map, Pair<Dimension, Double>>(copy, details);
@@ -338,4 +376,35 @@ public class MapGraphicBoxPrinter extends AbstractBoxPrinter {
         return layer;
     }
 
+    /**
+     * @return the usedDpi
+     */
+    public int getUsedDpi() {
+            return usedDpi;
+    }
+
+    /**
+     * @param usedDpi the usedDpi to set
+     */
+    public void setUsedDpi(int usedDpi) {
+            this.usedDpi = usedDpi;
+    }
+
+    /**
+     * usually null should be set only if a predefined scale is needed.
+     * 
+     * @return
+     */
+    public Integer getScale() {
+            return scaleValue;
+    }
+
+    /**
+     * usually null should be set only if a predefined scale is needed.
+     * 
+     * @param scale
+     */
+    public void setScale(Integer scale) {
+            this.scaleValue = scale;
+    }
 }
