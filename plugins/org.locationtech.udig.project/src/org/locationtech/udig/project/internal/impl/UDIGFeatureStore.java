@@ -18,6 +18,7 @@ import java.util.Set;
 import org.locationtech.udig.project.ILayer;
 import org.locationtech.udig.project.Interaction;
 import org.locationtech.udig.project.ProjectBlackboardConstants;
+import org.locationtech.udig.project.UDIGPrecisionModel;
 import org.locationtech.udig.project.internal.EditManager;
 import org.locationtech.udig.project.internal.Messages;
 import org.locationtech.udig.project.internal.ProjectPlugin;
@@ -35,6 +36,8 @@ import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.feature.Feature;
+import org.opengis.feature.FeatureVisitor;
+import org.opengis.feature.GeometryAttribute;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.FeatureType;
 import org.opengis.feature.type.Name;
@@ -44,6 +47,7 @@ import org.opengis.filter.identity.FeatureId;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.WKTWriter;
+import com.vividsolutions.jts.precision.GeometryPrecisionReducer;
 
 /**
  * A FeatureStore decorator that does not allow the transaction to be set more than once. (Only if
@@ -105,7 +109,9 @@ public class UDIGFeatureStore implements FeatureStore<FeatureType,Feature>, UDIG
             throws IOException {
         setTransactionInternal();
         if (value instanceof Geometry) {
-            Geometry geom = (Geometry) value;
+            //consider PrecisionModel that may be set
+            Geometry geom = (Geometry) ((UDIGPrecisionModel.getModel() == null) ? 
+                    value : UDIGPrecisionModel.getPrecisionReducer().reduce((Geometry)value));
             if (!geom.isValid()) {
                 WKTWriter writer = new WKTWriter();
                 String wkt = writer.write(geom);
@@ -119,6 +125,7 @@ public class UDIGFeatureStore implements FeatureStore<FeatureType,Feature>, UDIG
                 ProjectPlugin.log(msg);
                 throw new IOException(msg);
             }
+            value = geom;
         }
         wrapped.modifyFeatures(attribute, value, selectFilter);
     }
@@ -235,6 +242,22 @@ public class UDIGFeatureStore implements FeatureStore<FeatureType,Feature>, UDIG
     public List<FeatureId> addFeatures( FeatureCollection<FeatureType, Feature> features )
             throws IOException {
         setTransactionInternal();
+
+        //consider PrecisionModel that may be set
+        if (UDIGPrecisionModel.getModel() != null) {
+            final GeometryPrecisionReducer reducer = new GeometryPrecisionReducer(UDIGPrecisionModel.getModel());
+            reducer.setPointwise(true);
+            features.accepts(new FeatureVisitor() {         
+                @Override
+                public void visit(Feature feature) {
+                    GeometryAttribute attrib = feature.getDefaultGeometryProperty();
+                    attrib.setValue(reducer.reduce((
+                            Geometry)feature.getDefaultGeometryProperty().getValue()));
+                    feature.setDefaultGeometryProperty(attrib);
+                }
+            }, null);
+        }
+
         return wrapped.addFeatures(features);
     }
 
