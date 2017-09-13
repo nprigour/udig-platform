@@ -139,6 +139,13 @@ By default the &quot;Feature ID&quot; will be shown; you may wish to override th
                </appInfo>
             </annotation>
          </attribute>
+         <attribute name="createFeature" type="boolean">
+            <annotation>
+               <documentation>
+                  set this if the panel should be used during a new feature creation.
+               </documentation>
+            </annotation>
+         </attribute>
       </complexType>
    </element>
 

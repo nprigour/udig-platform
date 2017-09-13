@@ -73,6 +73,11 @@
                    type="com.vividsolutions.jts.geom.Geometry"/>
           </featureType>
        </editor>
+       <editor
+            dialogPage="org.locationtech.udig.feature.editor.PropertySheetDialogEditor"
+            id="org.locationtech.udig.feature.editor.PropertySheetDialogEditor"
+            name="PropertySheetDefault">
+      </editor>
 	      <editor
              dialogPage="org.locationtech.udig.feature.editor.DialogEditor"
              id="org.locationtech.udig.feature.editor.MatchAll"
@@ -147,5 +152,16 @@
                   id="test.tool.manager"
                   value="org.locationtech.udig.project.ui.internal.tool.display.TestProperty"/>
          </object>
+      </extension>
+      <extension
+            point="org.locationtech.udig.project.ui.featurePanel">
+         <featurePanel
+            createFeature="true"
+            id="org.locationtech.udig.feature.panel.PropertySheetPanelDefault"
+            labelProvider="org.locationtech.udig.feature.panel.FeatureLabelProvider"
+            name="CreateFeaturePanel"
+            panel="org.locationtech.udig.feature.panel.PropertySheetPanelDefault"
+            title="General Feature Create Editor">
+      </featurePanel>
       </extension>
 </plugin>
