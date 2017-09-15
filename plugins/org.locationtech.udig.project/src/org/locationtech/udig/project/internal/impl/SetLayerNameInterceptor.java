@@ -9,12 +9,13 @@
  */
 package org.locationtech.udig.project.internal.impl;
 
-import java.io.IOException;
-
 import org.locationtech.udig.catalog.IGeoResourceInfo;
 import org.locationtech.udig.project.interceptor.LayerInterceptor;
 import org.locationtech.udig.project.internal.Layer;
+import org.locationtech.udig.ui.PlatformGIS;
 import org.locationtech.udig.ui.ProgressManager;
+
+import org.eclipse.core.runtime.ISafeRunnable;
 
 /**
  * Sets the name of a newly created layer.
@@ -24,14 +25,22 @@ import org.locationtech.udig.ui.ProgressManager;
  */
 public class SetLayerNameInterceptor implements LayerInterceptor {
 
-    public void run( Layer layer ) {
-        try {
-            IGeoResourceInfo info = layer.getGeoResource().getInfo(ProgressManager.instance().get());
-            nameLayer(info, layer);
-        } catch (IOException e) {
-            //shouldn't happen
-            throw (RuntimeException) new RuntimeException( ).initCause( e );
-        }
+    public void run(final Layer layer ) {
+        // make sure that this is not executed in display thread
+        PlatformGIS.run (new ISafeRunnable() {
+            
+            @Override
+            public void run() throws Exception {
+                IGeoResourceInfo info = layer.getGeoResource().getInfo(ProgressManager.instance().get());
+                nameLayer(info, layer);
+            }
+            
+            @Override
+            public void handleException(Throwable exception) {
+                //shouldn't happen
+                throw (RuntimeException) new RuntimeException( ).initCause( exception );
+            }
+        });
     }
 
     /**
