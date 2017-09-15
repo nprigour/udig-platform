@@ -66,7 +66,7 @@ public class JGrassService extends IService {
     private Map<String, Serializable> params = null;
 
     /** metadata info field */
-    private JGrassServiceInfo info = null;
+    //private JGrassServiceInfo info = null;
 
     /** the resources members field */
     private volatile List<IResolve> mapsetMembers = null;
@@ -403,6 +403,30 @@ public class JGrassService extends IService {
         return null;
     }
 
+    @Override
+    /**
+     * Utilize the  IServiceInfo protected member of parent class instead of the
+     * private JGrassServiceInfo object.
+     */
+    public IServiceInfo getInfo( IProgressMonitor monitor ) throws IOException {
+        // override this method to work on display thread as well
+        if (info == null) { // lazy creation
+            synchronized (this) { // support concurrent access
+                if (info == null) {
+                    info = createInfo(monitor);
+                    if (info == null) {
+                        // could not connect or INFO_UNAVAILABLE
+                        info = INFO_UNAVAILABLE;
+                    }
+                }
+            }
+        }
+        if (info == INFO_UNAVAILABLE) {
+            return null;
+        }
+        return (JGrassServiceInfo) info;
+    }
+    
     protected IServiceInfo createInfo( IProgressMonitor monitor ) throws IOException {
         // lazy creation
         if (info == null) {
