@@ -196,7 +196,18 @@
             <groupId>org.geotools.jdbc</groupId>
             <artifactId>gt-jdbc-mysql</artifactId>
             <version>${geotools.version}</version>
+            <exclusions>
+              <exclusion>
+			    <groupId>mysql</groupId>
+			    <artifactId>mysql-connector-java</artifactId>
+              </exclusion>
+            </exclusions>
         </dependency>
+        <dependency>
+	    	<groupId>mysql</groupId>
+		    <artifactId>mysql-connector-java</artifactId>
+		    <version>5.1.38</version>
+		</dependency>
         <dependency>
             <groupId>org.geotools.jdbc</groupId>
             <artifactId>gt-jdbc-oracle</artifactId>
@@ -732,7 +743,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.1</version>
+            <version>2.4</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
@@ -740,6 +751,11 @@
             <version>1.2</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+		    <groupId>commons-beanutils</groupId>
+		    <artifactId>commons-beanutils</artifactId>
+		    <version>1.8.0</version>
+		</dependency>
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
