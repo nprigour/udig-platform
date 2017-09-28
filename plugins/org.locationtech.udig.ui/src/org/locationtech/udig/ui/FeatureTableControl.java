@@ -470,7 +470,7 @@ public class FeatureTableControl implements ISelectionProvider {
 
     private void setCellEditors( IAdaptable adaptable, int attributeCount ) {
         if (adaptable.getAdapter(CellEditor[].class) != null) {
-            CellEditor[] editors = (CellEditor[]) adaptable.getAdapter(Array.class);
+            CellEditor[] editors = adaptable.getAdapter(CellEditor[].class);
             if (editors.length < attributeCount) {
                 UiPlugin.log(
                         "not enough cell editors for feature type so not used", new Exception()); //$NON-NLS-1$

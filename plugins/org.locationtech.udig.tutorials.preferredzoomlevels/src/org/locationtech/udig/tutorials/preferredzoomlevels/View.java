@@ -39,9 +39,9 @@ public class View extends DefaultMapViewPart {
 	@Override
 	protected void createResources(List<IGeoResource> resources, 
 			IProgressMonitor monitor) throws IOException {
-		
+	java.util.Map<String, String> emptyMap = Collections.emptyMap();	
 		@SuppressWarnings("nls")
-        URL url = FileLocator.resolve(FileLocator.find(Activator.getDefault().getBundle(), new Path("data/face.shp"), Collections.emptyMap()));
+        URL url = FileLocator.resolve(FileLocator.find(Activator.getDefault().getBundle(), new Path("data/face.shp"), emptyMap));
 		IService r = CatalogPlugin.getDefault().getLocalCatalog().acquire(url, monitor);
 		resources.add(r.resources(monitor).get(0));
 	}
