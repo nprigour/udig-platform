@@ -296,8 +296,7 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
 
     @SuppressWarnings("unchecked")
     private File determineDestinationFile( Data data ) {
-        ExportResourceSelectionState layerSelectState = findState();
-        File exportDir = new File(layerSelectState.getExportDir());
+        File exportDir = getExportDir(data);
         String typeName = data.getName();
         try {
             if (typeName == null) {
@@ -345,7 +344,19 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
 
     }
 
-    private File addSuffix( File file ) {
+    /**
+     * subclasses may override to apply custom logic for computing
+     * exportDir based on Data argument
+     * 
+     * @param data
+     * @return
+     */
+    protected File getExportDir(Data data) {
+       ExportResourceSelectionState layerSelectState = findState();
+       return new File(layerSelectState.getExportDir());
+	}
+
+	private File addSuffix( File file ) {
         String path = stripEndSlash(file.getPath());
 
         File destination;
