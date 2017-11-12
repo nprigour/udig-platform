@@ -161,7 +161,7 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
      * @return success
      */
     @SuppressWarnings("unchecked")
-    private boolean exportResource( Data data, IProgressMonitor monitor ) {
+    private boolean exportResource(final Data data, IProgressMonitor monitor ) {
         if (monitor == null)
             monitor = new NullProgressMonitor();
 
@@ -250,7 +250,7 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
                 } else {
                     Display.getDefault().asyncExec(new Runnable(){
                         public void run() {
-                            String msg = "No features were exported; did you select anything?"; //$NON-NLS-1$
+                            String msg = "No features were exported for data " + data.getName() + " ; did you select anything?"; //$NON-NLS-1$
                             CatalogUIPlugin.log(msg, null);
                             wizardDialog.setErrorMessage(msg);
                         }
@@ -653,7 +653,7 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
         
     }
 
-    private boolean writeToShapefile(ShapefileDataStore shapefile, SimpleFeatureCollection fc) throws IOException {
+    protected boolean writeToShapefile(ShapefileDataStore shapefile, SimpleFeatureCollection fc) throws IOException {
         SimpleFeatureStore featureSource = (SimpleFeatureStore) shapefile.getFeatureSource();
         List<FeatureId> ids = featureSource.addFeatures(fc);
         return ids.size() >= 0;
