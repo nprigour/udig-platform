@@ -400,4 +400,13 @@ public class WorkflowWizardDialog extends WizardDialog implements Listener {
         startingPage.setPreviousPage(previousPage);
         updateButtons();
     }
+    
+    /**
+     * method can be used to override shell style for the wizard dialog.
+     * Should be called prior to opening the window.
+     * @param style
+     */
+    public void configureShellStyle(int style) {
+    	setShellStyle(style);
+    }
 }
