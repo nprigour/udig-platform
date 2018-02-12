@@ -51,6 +51,16 @@
       <renderer
             class="org.locationtech.udig.project.internal.render.impl.renderercreator.BadRenderMetricsFactory"
             />
+      <renderer
+            class="org.locationtech.udig.project.internal.render.impl.renderercreator.SingleFeatureRenderMetricsFactory"
+            id="singleFeature"
+            name="singlefeaturetest">
+      </renderer>
+      <renderer
+            class="org.locationtech.udig.project.internal.render.impl.renderercreator.SingleFeatureRenderMetricsFactory2"
+            id="singleFeature2"
+            name="singlefeaturetest2">
+      </renderer>
    </extension>
       <extension
             point="org.locationtech.udig.project.mapInterceptor">
@@ -88,5 +98,28 @@
                class="org.locationtech.udig.project.internal.TestLayerCreatedInterceptor"
                id="org.locationtech.udig.project.tests.layerCreated1"
                name="TestLayerCreatedInterceptor"/>
+      </extension>
+      <extension
+            point="org.eclipse.ui.menus">
+         <menuContribution
+               allPopups="false"
+               locationURI="menu:org.eclipse.ui.main.menu?after=window">
+            <menu
+                  label="Renderer Testing">
+               <command
+                     commandId="org.locationtech.udig.project.tests.configurerenderers"
+                     label="configure renderers"
+                     style="push">
+               </command>
+            </menu>
+         </menuContribution>
+      </extension>
+      <extension
+            point="org.eclipse.ui.commands">
+         <command
+               defaultHandler="org.locationtech.udig.project.command.RendererSetterHandler"
+               id="org.locationtech.udig.project.tests.configurerenderers"
+               name="configure renderers">
+         </command>
       </extension>
 </plugin>
