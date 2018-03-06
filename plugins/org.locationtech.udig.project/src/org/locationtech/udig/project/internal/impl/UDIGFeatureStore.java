@@ -83,7 +83,12 @@ public class UDIGFeatureStore implements FeatureStore<FeatureType,Feature>, UDIG
 
     public void removeFeatures( Filter filter ) throws IOException {
         setTransactionInternal();
-        wrapped.removeFeatures(filter);
+        try {
+        	wrapped.removeFeatures(filter);
+	    } catch (Exception e) {
+	    	handleException(e);
+			throw e;
+	    }
     }
 
     @Deprecated
@@ -92,49 +97,74 @@ public class UDIGFeatureStore implements FeatureStore<FeatureType,Feature>, UDIG
         setTransactionInternal();
         Name[] names = new Name[descriptors.length];
         for (int i = 0; i < descriptors.length; i ++) names[i] = descriptors[i].getName();
-        wrapped.modifyFeatures(names, values, filter);
+        
+        for (Object value : values) {
+        	value = applyPrecisionModel(value, filter);     
+        }
+        try {
+        	wrapped.modifyFeatures(names, values, filter);
+        } catch (Exception e) {
+        	handleException(e);
+    		throw e;
+        }        
     }
     
     public void modifyFeatures( Name[] names, Object[] values, Filter filter ) throws IOException {
         setTransactionInternal();
-        wrapped.modifyFeatures(names, values, filter);
+        for (Object value : values) {
+        	value = applyPrecisionModel(value, filter);     
+        }
+        try {
+        	wrapped.modifyFeatures(names, values, filter);
+        } catch (Exception e) {
+        	handleException(e);
+    		throw e;
+        }
     }
     
     public void modifyFeatures( Name name, Object value, Filter filter ) throws IOException {
         setTransactionInternal();
-        wrapped.modifyFeatures(name, value, filter);
+        value = applyPrecisionModel(value, filter);
+        try {
+	        wrapped.modifyFeatures(name, value, filter);
+        } catch (Exception e) {
+        	handleException(e);
+        }
     }
 
     @Deprecated
     public void modifyFeatures( AttributeDescriptor attribute, Object value, Filter selectFilter )
             throws IOException {
         setTransactionInternal();
-        if (value instanceof Geometry) {
-            //consider PrecisionModel that may be set
-            Geometry geom = (Geometry) ((UDIGPrecisionModel.getModel() == null) ? 
-                    value : UDIGPrecisionModel.getPrecisionReducer().reduce((Geometry)value));
-            if (!geom.isValid()) {
-                WKTWriter writer = new WKTWriter();
-                String wkt = writer.write(geom);
-                String where = selectFilter.toString();
-                if (selectFilter instanceof Id) {
-                    Id id = (Id) selectFilter;
-                    where = id.getIDs().toString();
-                }
-                String msg = "Modify fetures (WHERE " + where + ") failed with invalid geometry:"
-                        + wkt;
-                ProjectPlugin.log(msg);
-                throw new IOException(msg);
-            }
-            value = geom;
-        }
-        wrapped.modifyFeatures(attribute.getName(), value, selectFilter);
+        value = applyPrecisionModel(value, selectFilter);
+        try {
+	        wrapped.modifyFeatures(attribute.getName(), value, selectFilter);
+        } catch (Exception e) {
+        	handleException(e);
+        }    
     }
 
     public void setFeatures( FeatureReader<FeatureType, Feature> features )
             throws IOException {
         setTransactionInternal();
-        wrapped.setFeatures(features);
+        //consider PrecisionModel that may be set
+        if (UDIGPrecisionModel.getModel() != null) {
+            final GeometryPrecisionReducer reducer = new GeometryPrecisionReducer(UDIGPrecisionModel.getModel());
+            reducer.setPointwise(true);
+            while (features.hasNext()) {
+            	Feature feature = features.next();
+            	GeometryAttribute attrib = feature.getDefaultGeometryProperty();
+                attrib.setValue(reducer.reduce((
+                        Geometry)feature.getDefaultGeometryProperty().getValue()));
+                feature.setDefaultGeometryProperty(attrib);
+            }
+        }
+        try {
+        	wrapped.setFeatures(features);
+	    } catch (Exception e) {
+	    	handleException(e);
+			throw e;
+	    }
     }
 
     public void setTransaction( Transaction transaction ) {
@@ -259,7 +289,12 @@ public class UDIGFeatureStore implements FeatureStore<FeatureType,Feature>, UDIG
             }, null);
         }
 
-        return wrapped.addFeatures(features);
+        try {
+        	return wrapped.addFeatures(features);
+	    } catch (Exception e) {
+	    	handleException(e);
+			throw e;
+	    }
     }
 
     // Jody -This was unused
@@ -278,4 +313,52 @@ public class UDIGFeatureStore implements FeatureStore<FeatureType,Feature>, UDIG
     public QueryCapabilities getQueryCapabilities() {
         return wrapped.getQueryCapabilities();
     }
+    
+    
+    /**
+     * log and provide feedback on exception
+     * 
+     * @param e
+     * @throws IOException
+     */
+	private void handleException(Exception e) throws IOException {
+		ProjectPlugin.getPlugin().log(e);
+		PlatformGIS.syncInDisplayThread(new Runnable() {
+			@Override
+			public void run() {
+				MessageDialog.openError(new Shell(), null, "An error occured while trying to update/create/delete features. See log view for details");        
+			}               
+		});
+	}
+	
+	/**
+	 * apply precision model and check validity.
+	 * 
+	 * @param value
+	 * @param filter
+	 * @return
+	 * @throws IOException
+	 */
+	private Object applyPrecisionModel(Object value, Filter filter) throws IOException {
+		if (value instanceof Geometry) {
+            //consider PrecisionModel that may be set
+            Geometry geom = (Geometry) ((UDIGPrecisionModel.getModel() == null) ? 
+                    value : UDIGPrecisionModel.getPrecisionReducer().reduce((Geometry)value));
+            if (!geom.isValid()) {
+                WKTWriter writer = new WKTWriter();
+                String wkt = writer.write(geom);
+                String where = filter.toString();
+                if (filter instanceof Id) {
+                    Id id = (Id) filter;
+                    where = id.getIDs().toString();
+                }
+                String msg = "Modify fetures (WHERE " + where + ") failed with invalid geometry:"
+                        + wkt;
+                ProjectPlugin.log(msg);
+                throw new IOException(msg);
+            }
+            value = geom;
+        }
+		return value;
+	}
 }

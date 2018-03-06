@@ -19,18 +19,18 @@ import java.util.Set;
 import org.locationtech.udig.project.ILayer;
 import org.locationtech.udig.project.Interaction;
 import org.locationtech.udig.project.LayerEvent;
-import org.locationtech.udig.project.ProjectBlackboardConstants;
 import org.locationtech.udig.project.UDIGPrecisionModel;
 import org.locationtech.udig.project.internal.EditManager;
 import org.locationtech.udig.project.internal.Messages;
 import org.locationtech.udig.project.internal.ProjectPlugin;
-
+import org.locationtech.udig.ui.PlatformGIS;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Shell;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.FeatureEvent;
 import org.geotools.data.FeatureListener;
 import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureSource;
 import org.geotools.data.FeatureStore;
 import org.geotools.data.Query;
 import org.geotools.data.QueryCapabilities;
@@ -97,9 +97,13 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
 
     public void removeFeatures( Filter filter ) throws IOException {
         setTransactionInternal();
-        wrapped.removeFeatures(filter);
-        
-        fireLayerEditEvent( FeatureEvent.Type.REMOVED, null, filter );
+        try {
+        	wrapped.removeFeatures(filter);
+        	fireLayerEditEvent( FeatureEvent.Type.REMOVED, null, filter );
+	    } catch (Exception e) {
+	    	handleException(e);
+			throw e;
+	    }
     }
 
     @Deprecated
@@ -108,8 +112,16 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
         setTransactionInternal();
         Name[] names = new Name[descriptors.length];
         for (int i = 0; i < names.length; i ++) names[i] = descriptors[i].getName();
-        wrapped.modifyFeatures(names, values, filter);
-        fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, filter );
+        for (Object value : values) {
+        	value = applyPrecisionModel(value, filter);     
+        }
+        try {
+        	wrapped.modifyFeatures(names, values, filter);
+        	fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, filter );
+	    } catch (Exception e) {
+	    	handleException(e);
+			throw e;
+	    }
     }
     
     public void modifyFeatures( Name[] names, Object[] values, Filter filter ) throws IOException {
@@ -125,41 +137,42 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
     }
     public void modifyFeatures( String name, Object value, Filter filter ) throws IOException {
         setTransactionInternal();
-        wrapped.modifyFeatures(name, value, filter);
-        fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, filter );        
+        value = applyPrecisionModel(value, filter);
+		try {
+	        wrapped.modifyFeatures(name, value, filter);
+		    fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, filter );
+	    } catch (Exception e) {
+	    	handleException(e);
+			throw e;
+	    }
     } 
     public void modifyFeatures( String names[], Object values[], Filter filter ) throws IOException {
         setTransactionInternal();
-        wrapped.modifyFeatures(names, values, filter);
-        fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, filter );        
+        for (Object value : values) {
+        	value = applyPrecisionModel(value, filter);     
+        }
+        try {
+        	wrapped.modifyFeatures(names, values, filter);
+        	fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, filter );
+        } catch (Exception e) {
+        	handleException(e);
+    		throw e;
+        }
     }
     
     @Deprecated
     public void modifyFeatures( AttributeDescriptor attribute, Object value, Filter selectFilter )
             throws IOException {
         setTransactionInternal();
-        if (value instanceof Geometry) {
-            //consider PrecisionModel that may be set
-            Geometry geom = (Geometry) ((UDIGPrecisionModel.getModel() == null) ? 
-                    value : UDIGPrecisionModel.getPrecisionReducer().reduce((Geometry)value));
-            if (!geom.isValid()) {
-                WKTWriter writer = new WKTWriter();
-                String wkt = writer.write(geom);
-                String where = selectFilter.toString();
-                if (selectFilter instanceof Id) {
-                    Id id = (Id) selectFilter;
-                    where = id.getIDs().toString();
-                }
-                String msg = "Modify fetures (WHERE " + where + ") failed with invalid geometry:"
-                        + wkt;
-                ProjectPlugin.log(msg);
-                throw new IOException(msg);
-            }
-            value = geom;
+        value = applyPrecisionModel(value, selectFilter);     
+        try {
+	        wrapped.modifyFeatures(attribute, value, selectFilter);
+	        fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, selectFilter );
+        } catch (Exception e) {
+        	handleException(e);
         }
-        wrapped.modifyFeatures(attribute.getName(), value, selectFilter);
-        fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, selectFilter );
     }
+    
     /**
      * Used to force the layer to send out an LayerEditEvent (and refresh!); we are faking the correct FeatureEventType
      * we expected from the wrapped GeoTools datastore. This is defensive programming as we are not trusting
@@ -180,7 +193,7 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
     
     public void setFeatures( FeatureReader<SimpleFeatureType, SimpleFeature> features )
             throws IOException {
-        setTransactionInternal();
+        setTransactionInternal();        
 
         //consider PrecisionModel that may be set
         if (UDIGPrecisionModel.getModel() != null) {
@@ -199,8 +212,13 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
             features = DataUtilities.reader(collection);
         }
         
-        wrapped.setFeatures(features);
-        fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, Filter.INCLUDE );
+        try {
+        	wrapped.setFeatures(features);
+        	fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, Filter.INCLUDE );
+	    } catch (Exception e) {
+	    	handleException(e);
+			throw e;
+	    }
     }
 
     public void setTransaction( Transaction transaction ) {
@@ -310,7 +328,7 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
     public List<FeatureId> addFeatures( FeatureCollection<SimpleFeatureType, SimpleFeature> features )
             throws IOException {
         setTransactionInternal();
-        
+                
         //consider PrecisionModel that may be set
         if (UDIGPrecisionModel.getModel() != null) {
             final GeometryPrecisionReducer reducer = new GeometryPrecisionReducer(UDIGPrecisionModel.getModel());
@@ -336,14 +354,19 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
              */
         }
         
-        List<FeatureId> ids = wrapped.addFeatures(features);
-        
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-        Id filter = ff.id( new HashSet<FeatureId>( ids ) );
-        
-        fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, Filter.INCLUDE );
-        
-        return ids;
+        try {
+	        List<FeatureId> ids = wrapped.addFeatures(features);
+	        
+	        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+	        Id filter = ff.id( new HashSet<FeatureId>( ids ) );
+	        
+	        fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, Filter.INCLUDE );
+	        
+	        return ids;
+	    } catch (Exception e) {
+	    	handleException(e);
+			throw e;
+	    }
     }
 
     public boolean sameSource( Object source ) {
@@ -361,4 +384,51 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
     public QueryCapabilities getQueryCapabilities() {
         return wrapped.getQueryCapabilities();
     }
+    
+    /**
+     * log and provide feedback on exception
+     * 
+     * @param e
+     * @throws IOException
+     */
+	private void handleException(Exception e) throws IOException {
+		ProjectPlugin.getPlugin().log(e);
+		PlatformGIS.syncInDisplayThread(new Runnable() {
+			@Override
+			public void run() {
+				MessageDialog.openError(new Shell(), null, "An error occured while trying to update/create/delete features. See log view for details");        
+			}               
+		});
+	}
+	
+	/**
+	 * apply precision model and check validity.
+	 * 
+	 * @param value
+	 * @param filter
+	 * @return
+	 * @throws IOException
+	 */
+	private Object applyPrecisionModel(Object value, Filter filter) throws IOException {
+		if (value instanceof Geometry) {
+            //consider PrecisionModel that may be set
+            Geometry geom = (Geometry) ((UDIGPrecisionModel.getModel() == null) ? 
+                    value : UDIGPrecisionModel.getPrecisionReducer().reduce((Geometry)value));
+            if (!geom.isValid()) {
+                WKTWriter writer = new WKTWriter();
+                String wkt = writer.write(geom);
+                String where = filter.toString();
+                if (filter instanceof Id) {
+                    Id id = (Id) filter;
+                    where = id.getIDs().toString();
+                }
+                String msg = "Modify fetures (WHERE " + where + ") failed with invalid geometry:"
+                        + wkt;
+                ProjectPlugin.log(msg);
+                throw new IOException(msg);
+            }
+            value = geom;
+        }
+		return value;
+	}
 }
