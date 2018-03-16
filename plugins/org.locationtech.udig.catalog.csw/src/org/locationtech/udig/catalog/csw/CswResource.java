@@ -14,6 +14,7 @@ package org.locationtech.udig.catalog.csw;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
@@ -33,7 +34,6 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wms.WebMapServer;
 import org.geotools.data.wms.xml.WMSSchema;
-import org.geotools.data.wfs.v1_0_0.xml.WFSSchema;
 
 import com.vividsolutions.jts.geom.Envelope;
 
@@ -244,7 +244,7 @@ static class CswWFSResource extends CswResource{
      * @see org.locationtech.udig.catalog.Csw.CswResource#getSchema()
      */
     protected URI getSchema() {
-        return WFSSchema.NAMESPACE;
+        return makeURI("http://www.opengis.net/wfs");
     }
 
     /*
@@ -296,6 +296,16 @@ static class CswWFSResource extends CswResource{
         }
         IResolveDelta delta = new ResolveDelta( this, real, null );
         ((CatalogImpl)CatalogPlugin.getDefault().getLocalCatalog()).fire( new ResolveChangeEvent( this, IResolveChangeEvent.Type.POST_CHANGE, delta )  );
+    }
+    
+    // convinience method to deal with the URISyntaxException
+    private static URI makeURI(String s) {
+        try {
+            return new URI(s);
+        } catch (URISyntaxException e) {
+            // do nothing
+            return null;
+        }
     }
 }
 

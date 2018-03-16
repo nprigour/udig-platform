@@ -14,6 +14,7 @@ package org.locationtech.udig.catalog.google;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +32,6 @@ import org.locationtech.udig.catalog.internal.ResolveDelta;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.geotools.data.wfs.WFSDataStore;
-import org.geotools.data.wfs.v1_0_0.xml.WFSSchema;
 import org.geotools.data.wms.WebMapServer;
 import org.geotools.data.wms.xml.WMSSchema;
 
@@ -245,7 +245,11 @@ static class GoogleWFSResource extends GoogleResource{
      * @see org.locationtech.udig.catalog.google.GoogleResource#getSchema()
      */
     protected URI getSchema() {
-        return WFSSchema.NAMESPACE;
+        try {
+			return new URI("http://www.opengis.net/wfs");
+		} catch (URISyntaxException e) {
+			return null;
+		}
     }
 
     /*
