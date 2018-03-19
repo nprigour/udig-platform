@@ -19,6 +19,7 @@ import org.locationtech.udig.catalog.wfs.internal.Messages;
 
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.geotools.data.wfs.WFSDataStore;
+import org.geotools.wfs.WFS;
 
 
 /**
@@ -54,12 +55,9 @@ class WFSServiceInfo extends IServiceInfo {
         return ds.getInfo().getKeywords();
     }
 
-    /*
-     * @see org.locationtech.udig.catalog.google.GoogleResource#getSchema()
-     */
     public URI getSchema() {
         try {
-			return new URI("http://www.opengis.net/wfs");
+			return new URI(WFS.NAMESPACE);
 		} catch (URISyntaxException e) {
 			return null;
 		}

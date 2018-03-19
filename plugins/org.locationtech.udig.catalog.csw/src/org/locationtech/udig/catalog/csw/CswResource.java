@@ -34,6 +34,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wms.WebMapServer;
 import org.geotools.data.wms.xml.WMSSchema;
+import org.geotools.wfs.WFS;
 
 import com.vividsolutions.jts.geom.Envelope;
 
@@ -244,7 +245,11 @@ static class CswWFSResource extends CswResource{
      * @see org.locationtech.udig.catalog.Csw.CswResource#getSchema()
      */
     protected URI getSchema() {
-        return makeURI("http://www.opengis.net/wfs");
+        try {
+			return new URI(WFS.NAMESPACE);
+		} catch (URISyntaxException e) {
+			return null;
+		}
     }
 
     /*
@@ -296,16 +301,6 @@ static class CswWFSResource extends CswResource{
         }
         IResolveDelta delta = new ResolveDelta( this, real, null );
         ((CatalogImpl)CatalogPlugin.getDefault().getLocalCatalog()).fire( new ResolveChangeEvent( this, IResolveChangeEvent.Type.POST_CHANGE, delta )  );
-    }
-    
-    // convinience method to deal with the URISyntaxException
-    private static URI makeURI(String s) {
-        try {
-            return new URI(s);
-        } catch (URISyntaxException e) {
-            // do nothing
-            return null;
-        }
     }
 }
 
