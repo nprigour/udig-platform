@@ -181,7 +181,6 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
                 schema = builder.buildFeatureType();
             }
 
-            fc = applyExtraFiltering(data, schema, fc);
             File file = determineDestinationFile(data);
 
             monitor.beginTask("", IProgressMonitor.UNKNOWN); //$NON-NLS-1$
@@ -295,19 +294,7 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
         return true;
     }
 
-    /**
-     * override to perform any extra filterin of results prior to actual file export.  
-     * @param data
-     * @param schema
-     * @param fc
-     * @return
-     */
-    protected SimpleFeatureCollection applyExtraFiltering(final Data data, final SimpleFeatureType schema,
-			SimpleFeatureCollection fc) {
-		return fc;
-	}
-
-	@SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     private File determineDestinationFile( Data data ) {
         File exportDir = getExportDir(data);
         String typeName = data.getName();
