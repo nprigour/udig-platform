@@ -72,8 +72,7 @@ public class FeatureTypeMatch {
                 AttributeDescriptor attr = featureType.getDescriptor(name);
                 if (type == null || attr == null)
                     return null;
-                //special case for numbers
-                if (type == Number.class && type.isAssignableFrom(attr.getType().getBinding())) 
+                if (type.isAssignableFrom(attr.getType().getBinding())) 
                     return attr;
                 if (type != attr.getType().getBinding())
                     return null;
