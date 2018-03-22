@@ -45,6 +45,7 @@ public class FeatureTypeMatch {
     protected static class AttributeMatcher {
         String name;
         Class< ? > type;
+        boolean strictMatch;
 
         /**
          * New instance.
@@ -53,6 +54,10 @@ public class FeatureTypeMatch {
             name = attr.getAttribute("name"); //$NON-NLS-1$
             try {
                 type = Class.forName(attr.getAttribute("type")); //$NON-NLS-1$
+                strictMatch = "assignable".equalsIgnoreCase(attr.getAttribute("typeMatch")) ? 
+                        false : true;
+                System.out.println(attr.getAttribute("typeMatch"));
+                System.out.println(name +"\n" + strictMatch + "\n" + type);
             } catch (Exception e) {
                 ProjectUIPlugin
                         .log(
@@ -70,18 +75,25 @@ public class FeatureTypeMatch {
                 List<AttributeDescriptor> used ) {
             if (name != null) {
                 AttributeDescriptor attr = featureType.getDescriptor(name);
-                if (type == null || attr == null)
+                if (type == null || attr == null) {
                     return null;
-                if (type.isAssignableFrom(attr.getType().getBinding())) 
+                }
+                if (strictMatch && type == attr.getType().getBinding()) {
                     return attr;
-                if (type != attr.getType().getBinding())
-                    return null;
-                return attr;
+                }
+                if (!strictMatch && type.isAssignableFrom(attr.getType().getBinding())) { 
+                    return attr;                
+                }
+                return null;
             }
             for( int i = 0; i < featureType.getAttributeCount(); i++ ) {
                 if (!used.contains(featureType.getDescriptor(i))) {
-                    if (type == featureType.getDescriptor(i).getType().getBinding())
+                    if (strictMatch && type == featureType.getDescriptor(i).getType().getBinding()) {
                         return featureType.getDescriptor(i);
+                    }
+                    if (!strictMatch && type.isAssignableFrom(featureType.getDescriptor(i).getType().getBinding())) { 
+                        return featureType.getDescriptor(i);                
+                    }
                 }
             }
             return null;
