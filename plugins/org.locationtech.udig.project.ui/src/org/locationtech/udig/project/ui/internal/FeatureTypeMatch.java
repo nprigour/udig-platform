@@ -56,8 +56,6 @@ public class FeatureTypeMatch {
                 type = Class.forName(attr.getAttribute("type")); //$NON-NLS-1$
                 strictMatch = "assignable".equalsIgnoreCase(attr.getAttribute("typeMatch")) ? 
                         false : true;
-                System.out.println(attr.getAttribute("typeMatch"));
-                System.out.println(name +"\n" + strictMatch + "\n" + type);
             } catch (Exception e) {
                 ProjectUIPlugin
                         .log(
