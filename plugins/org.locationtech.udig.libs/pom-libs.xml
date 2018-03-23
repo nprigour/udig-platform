@@ -621,7 +621,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.38</version>
+			<version>5.1.46</version>
 		</dependency>
 
 		<!-- We get this from the base RCP as such they are already provided by 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="lib/mysql-connector-java-5.1.46.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/ant-1.8.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/ant-launcher-1.8.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/antlr-2.7.7.jar"/>
@@ -214,7 +215,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/jts-example-1.14.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jts-io-1.14.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/miglayout-3.7-swing.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/mysql-connector-java-5.1.38.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/net.opengis.fes-19.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/net.opengis.ows-19.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/net.opengis.wcs-19.0.jar"/>
