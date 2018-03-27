@@ -21,7 +21,7 @@ import org.locationtech.udig.project.command.UndoableMapCommand;
 import org.locationtech.udig.project.command.provider.EditFeatureProvider;
 import org.locationtech.udig.project.command.provider.EditLayerProvider;
 import org.locationtech.udig.project.internal.Messages;
-
+import org.apache.commons.lang.Validate;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.geotools.data.FeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
@@ -48,34 +48,19 @@ public class SetAttributesCommand extends AbstractEditCommand implements Undoabl
     private final IBlockingProvider<SimpleFeature> editFeature;
 
     protected final IBlockingProvider<ILayer> editLayer;
-
-    /**
-     * Creates a new instance of SetAttributeCommand.
-     * 
-     * @param feature the feature to modify
-     * @param xpath the xpath that identifies an attribute in the current edit feature.
-     * @param value the value that will replace the old attribute value.
-     */
-    public SetAttributesCommand( IBlockingProvider<SimpleFeature> feature, IBlockingProvider<ILayer> layer, String xpath[],
-            Object value[] ) {
-        this.xpath = xpath;
-        this.value = value;
-        this.oldValue = new Object[value.length];
-        editFeature = feature;
-        editLayer = layer;
-    }
     
     /**
      * Creates a new instance of SetAttributeCommand.
      * 
-     * @param feature the feature to modify
      * @param xpath the xpath that identifies an attribute in the current edit feature.
      * @param value the value that will replace the old attribute value.
      */
     public SetAttributesCommand( String xpath[], Object value[] ) {
+        Validate.notNull(xpath);
+        Validate.notNull(value);
         editFeature=new EditFeatureProvider(this);
         editLayer=new EditLayerProvider(this);
-        this.oldValue = new Object[value.length];
+        this.oldValue = new Object[xpath.length];
         this.xpath=xpath;
         this.value=value; 
     }

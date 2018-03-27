@@ -668,6 +668,12 @@ public class Messages extends NLS {
 
     public static String LayerCRSPropertyPage_warningMessage;
 
+    public static String Feature_Attribute_Name;
+
+    public static String Feature_Attribute_Name_tooltip;
+
+    public static String PREFERENCES_LINK_TO_GENERAL_PAGE;
+
     static {
         // initialize resource bundle
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
