@@ -91,8 +91,6 @@ import com.vividsolutions.jts.geom.Polygon;
  * @since 1.1.0
  */
 public class FeatureTypeEditor {
-
-    private static final int MAX_ATTRIBUTE_LENGTH = 10485759;  //Maximum allows by postgis and is "big enough" 
     
     private static final List ALLOWED_BINDINGS_FOR_LENGHT_SET = Arrays.asList(String.class, Double.class, Long.class, Integer.class, Short.class);
     /**
@@ -732,8 +730,6 @@ public class FeatureTypeEditor {
 
     public class AttributeCellModifier implements ICellModifier {
 
-        private Object lastCRS=getDefaultCRS();
-
         public boolean canModify( Object element, String property ) {
             if (String.valueOf(OTHER_COLUMN).equals(property) && !(element instanceof GeometryDescriptor))
                 return false;
@@ -818,12 +814,10 @@ public class FeatureTypeEditor {
                     builder.setBinding(type);
                     return builder.buildDescriptor( editElement.getLocalName());
                 }
-            case OTHER_COLUMN:
-                lastCRS=value;
-                
+            case OTHER_COLUMN:                
                 CoordinateReferenceSystem crs = (CoordinateReferenceSystem) value;
-                if( FeatureTypeEditor.this.featureType.getGeometryDescriptor()==editElement ){
-					setDefaultCRS(crs);
+                if (FeatureTypeEditor.this.featureType.getGeometryDescriptor() == editElement) {
+                    setDefaultCRS(crs);
                 }
 
                 builder.setCRS(crs);
