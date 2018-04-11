@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.geotools.data.DataAccessFactory;
@@ -23,6 +24,7 @@ import org.geotools.data.DataAccessFactory.Param;
 import org.geotools.data.DataAccessFinder;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.DataStoreFinder;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.FileDataStoreFactorySpi;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.util.URLs;
@@ -125,7 +127,7 @@ public class DataStoreServiceExtension extends IServiceExtension {
                     params.put(param.key, url);
                 } else if (File.class.isAssignableFrom(param.type)
                         && "file".equalsIgnoreCase(url.getProtocol())) {
-                    File file = URLs.urlToFile(url);
+                    File file = DataUtilities.urlToFile(url);
                     params.put(param.key, file);
 
                 } else if (param.sample != null) {
@@ -161,10 +163,10 @@ public class DataStoreServiceExtension extends IServiceExtension {
         for( Param param : factory.getParametersInfo() ) {
             if (param.required) {
                 if (URL.class.isAssignableFrom(param.type)) {
-                    return true; // we can use a URL
+                    return checkCanHandleURLDataStore(factory, url);
                 }
                 if (File.class.isAssignableFrom(param.type)) {
-                    return "file".equalsIgnoreCase(url.getProtocol());
+                    return checkCanHandleFileDataStore(factory, url);
                 }
             }
         }
@@ -174,6 +176,7 @@ public class DataStoreServiceExtension extends IServiceExtension {
         }
         return false;
     }
+    
     /**
      * Creates an IService based on the params provided.
      * 
@@ -208,5 +211,56 @@ public class DataStoreServiceExtension extends IServiceExtension {
 
         GTFormat format = GTFormat.format(factory);
         return format.toID(factory, params);
+    }
+    
+    
+    /**
+     * modify this method to return whether the provided File URL can be handled by the
+     * given DataAccessFactory.
+     * 
+     * @param factory
+     * @param url
+     * @return
+     */
+    static private boolean checkCanHandleFileDataStore(DataAccessFactory factory, URL url) {
+        Object dbTypeSample = null;
+        for( Param param : factory.getParametersInfo() ) {
+            if ("dbtype".equals(param.key)) {
+                dbTypeSample = param.sample;
+                break;
+            }
+        }
+        if ("geopkg".equals(dbTypeSample)) {
+            return FilenameUtils.getExtension(url.toExternalForm()).equalsIgnoreCase("gkpg");
+        } else if ("spatialite".equals(dbTypeSample) || "sqlite".equals(dbTypeSample)) {
+            String extension = FilenameUtils.getExtension(url.toExternalForm());
+            return extension.equalsIgnoreCase(".db") 
+                    || extension.equalsIgnoreCase(".sqlite") 
+                    || extension.equalsIgnoreCase(".sqlite2") 
+                    || extension.equalsIgnoreCase(".sqlite3");
+        }
+        return "file".equalsIgnoreCase(url.getProtocol());
+    }
+
+    /**
+     * modify this method to return whether the provided URL can be handled by the
+     * given DataAccessFactory.
+     * 
+     * @param factory
+     * @param url
+     * @return
+     */
+    static private boolean checkCanHandleURLDataStore(DataAccessFactory factory, URL url) {
+        Object dbTypeSample = null;
+        for( Param param : factory.getParametersInfo() ) {
+            if ("dbtype".equals(param.key)) {
+                dbTypeSample = param.sample;
+                break;
+            }
+        }
+        if ("app-schema".equals(dbTypeSample)) {
+            return FilenameUtils.getExtension(url.toExternalForm()).equalsIgnoreCase("xsd");
+        } 
+        return true;
     }
 }
