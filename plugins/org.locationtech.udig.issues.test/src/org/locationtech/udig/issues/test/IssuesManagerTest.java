@@ -19,6 +19,16 @@ import static org.junit.Assert.assertTrue;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IViewPart;
+import org.geotools.data.DataStore;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.locationtech.udig.AbstractProjectUITestCase;
 import org.locationtech.udig.core.enums.Priority;
 import org.locationtech.udig.issues.AbstractIssue;
@@ -37,17 +47,6 @@ import org.locationtech.udig.issues.listeners.IssuesManagerEvent;
 import org.locationtech.udig.issues.listeners.IssuesManagerEventType;
 import org.locationtech.udig.ui.WaitCondition;
 import org.locationtech.udig.ui.tests.support.UDIGTestUtil;
-
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IViewPart;
-import org.geotools.data.DataStore;
-import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeatureType;
 
 public class IssuesManagerTest extends AbstractProjectUITestCase {
@@ -66,27 +65,53 @@ public class IssuesManagerTest extends AbstractProjectUITestCase {
      * Test method for 'org.locationtech.udig.project.ui.internal.IssuesManager.removeIssues(String)'
      */
     @Test
-    public void testRemoveIssues() {
+    public void testRemoveIssues() throws Exception {
         IssuesManager m = new IssuesManager();
-        IIssuesList issueslist = m.getIssuesList();
+        final IIssuesList issueslist = m.getIssuesList();
+
         for( int i = 0; i < 10; i++ ) {
             issueslist.add(new DummyIssue(i, i < 6 ? "toRemove" : "g" + i)); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        DummyListener l = new DummyListener();
+        final DummyListener l = new DummyListener();
         m.addIssuesListListener(l);
+
+        UDIGTestUtil.inDisplayThreadWait(2000, new WaitCondition(){
+            public boolean isTrue() {
+                return issueslist.size() == 10;
+            }
+        }, true);
 
         assertEquals(10, issueslist.size());
         m.removeIssues("toRemove"); //$NON-NLS-1$
+        UDIGTestUtil.inDisplayThreadWait(2000, new WaitCondition(){
+            public boolean isTrue() {
+                return issueslist.size() == 4;
+            }
+        }, true);
+
         assertEquals("All the issues with groupId \"toRemove\"" + //$NON-NLS-1$
                 " should be gone leaving 4 items", 4, issueslist.size()); //$NON-NLS-1$
         for( IIssue issue : issueslist ) {
             assertFalse("Item has groupId \"toRemove\"", issue.getGroupId().equals("toRemove")); //$NON-NLS-1$ //$NON-NLS-2$
         }
+        // removed six elements, expect 6 changes in Listener
+        UDIGTestUtil.inDisplayThreadWait(12000, new WaitCondition(){
+            public boolean isTrue() {
+                return l.changes == 6;
+            }
+        }, true);
+
         assertEquals(6, l.changes);
         assertEquals(1, l.timesCalled);
         l.changes = 0;
         l.timesCalled = 0;
         m.removeIssues("hello"); //$NON-NLS-1$
+        UDIGTestUtil.inDisplayThreadWait(10000, new WaitCondition(){
+            public boolean isTrue() {
+                return l.changes == 0;
+            }
+        }, true);
+
         assertEquals(0, l.changes);
         assertEquals(0, l.timesCalled);
         assertEquals(4, issueslist.size());
