@@ -36,7 +36,9 @@ import org.locationtech.udig.project.render.RenderException;
  */
 public class LowLatencyFeatureRenderMetricsFactory implements IRenderMetricsFactory {
 
-
+    //set this static attribute to true to enable renderer
+    public static boolean enabled = false;
+    
     /**
      * Define an AbstractRenderMetrics instance with the following values:
      * <ul>
@@ -90,7 +92,7 @@ public class LowLatencyFeatureRenderMetricsFactory implements IRenderMetricsFact
     }
     
     public boolean canRender( IRenderContext context ) throws IOException {
-        return context.getGeoResource().canResolve(FeatureSource.class);
+        return enabled && context.getGeoResource().canResolve(FeatureSource.class);
     }
 
     public AbstractRenderMetrics createMetrics( IRenderContext context ) {

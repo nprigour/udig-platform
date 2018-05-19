@@ -43,19 +43,27 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.geotools.util.Range;
 import org.locationtech.udig.project.ILayer;
+import org.locationtech.udig.project.IMap;
 import org.locationtech.udig.project.IStyleBlackboard;
 import org.locationtech.udig.project.internal.Layer;
 import org.locationtech.udig.project.internal.render.MultiLayerRenderer;
 import org.locationtech.udig.project.internal.render.RenderContext;
 import org.locationtech.udig.project.internal.render.impl.RenderMetricsSorter;
 import org.locationtech.udig.project.internal.render.impl.RendererCreatorImpl;
+import org.locationtech.udig.project.internal.render.impl.renderercreator.HighLatencyFeatureRenderMetricsFactory;
+import org.locationtech.udig.project.internal.render.impl.renderercreator.LowLatencyFeatureRenderMetricsFactory;
 import org.locationtech.udig.project.render.AbstractRenderMetrics;
 import org.locationtech.udig.project.render.IRenderer;
 import org.locationtech.udig.project.ui.ApplicationGIS;
 import org.locationtech.udig.project.ui.internal.ApplicationGISInternal;
+import org.locationtech.udig.project.ui.internal.MapPart;
 
 
 /**
@@ -77,6 +85,32 @@ public class RendererSetterHandler extends AbstractHandler {
         final Shell shell= HandlerUtil.getActiveShell(event);
 
         final RendererControlDialog dialog = new RendererControlDialog(shell);
+        
+        //set this flag to enable High & Low Latency renderers
+        //we use this approach in order to allow explicit activation
+        //of the two renderers only for the specific menu option since
+        //enablement of the renderers causes certain regression checks
+        //to fail
+        HighLatencyFeatureRenderMetricsFactory.enabled = true;
+        LowLatencyFeatureRenderMetricsFactory.enabled = true;
+        
+        //after enablement of the above renderers close and re-open of map 
+        //is needed so that changes take effect
+        IMap map = ApplicationGIS.getActiveMap();
+        IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+        if( window!=null && map != null){
+            IWorkbenchPage page = window.getActivePage();
+            if( page!=null ){
+                IEditorPart[] editorparts = page.getEditors();
+                for (IEditorPart editorpart: editorparts) {
+                    if( editorpart instanceof MapPart && ((MapPart) editorpart).getMap().equals(map)){
+                        page.activate(editorpart);
+                        page.closeEditor(editorpart, false);
+                        ApplicationGIS.openMap(map);
+                    }
+                }
+            }
+        }
 
         shell.getDisplay().asyncExec(new Runnable() {
 
