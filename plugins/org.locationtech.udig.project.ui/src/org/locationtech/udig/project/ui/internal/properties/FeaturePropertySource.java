@@ -23,7 +23,7 @@ import org.locationtech.udig.project.command.EditCommand;
 import org.locationtech.udig.project.command.factory.EditCommandFactory;
 import org.locationtech.udig.project.ui.ApplicationGIS;
 import org.locationtech.udig.project.ui.internal.Messages;
-
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.ui.views.properties.IPropertyDescriptor;
@@ -313,14 +313,15 @@ public class FeaturePropertySource implements IPropertySource2 {
             if (id instanceof Integer) {
                 int i = ((Integer) id).intValue();
                 Object attr = feature.getAttribute(i);
+                //for String check and nullify if empty
+                if (attr instanceof String) {
+                    value = StringUtils.trimToNull((String) value);
+                }
                 if (hasValueChanged(value, attr)) {
                     EditCommand command = (EditCommand) EditCommandFactory.getInstance().createSetAttributeCommand(
                             attrs.get(i).getName().getLocalPart(), value);
                     map.sendCommandASync(command);
                 }
-                EditCommand command = (EditCommand) EditCommandFactory.getInstance().createSetAttributeCommand(
-                        attrs.get(i).getName().getLocalPart(), value);
-                map.sendCommandASync(command);
                 if (attr instanceof String) {
                     feature.setAttribute(i, value);
                 } else if (attr instanceof Integer) {
