@@ -15,15 +15,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
+import org.geotools.gce.imagemosaic.ImageMosaicFormat;
+import org.geotools.util.URLs;
 import org.locationtech.udig.catalog.ICatalog;
 import org.locationtech.udig.catalog.ID;
 import org.locationtech.udig.catalog.IResolveChangeEvent;
@@ -86,6 +91,24 @@ public class ShpServiceImpl extends IService {
                 memorymapped = false;
             }
         }
+        
+        //check if shapefile corresponds to a mosaic and set a param property
+        if (new ImageMosaicFormat().accepts(url)) {
+        	params.put("mosaic", true);
+        }
+        //check if a .cpg file with charset encoding exists
+        URL cpgURL = URLs.changeUrlExt(url, "cpg");
+        File file = URLs.urlToFile(cpgURL);
+        if (file.exists()) {
+        	try {
+				String charsetName = StringUtils.trimToNull(FileUtils.readFileToString(file));
+				Charset charset = Charset.forName(charsetName);
+				params.put(ShapefileDataStoreFactory.DBFCHARSET.key, charsetName);
+			} catch (Exception e) {
+				ShpPlugin.log("Problem setting charset from " + file, e);
+			}
+        }
+        
         if (!params.containsKey(ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key)) {
             params.put(ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key, ShpPlugin.getDefault().isUseSpatialIndex());
         }
@@ -150,7 +173,12 @@ public class ShpServiceImpl extends IService {
                     String[] typenames = ds.getTypeNames();
                     if (typenames != null)
                         for( int i = 0; i < typenames.length; i++ ) {
+                        	//check if a property file exist and in that case consider the posibility of
+                        	//mosaic map
                             ShpGeoResourceImpl shpGeoResource = new ShpGeoResourceImpl(this, typenames[i]);
+                            if (params.get("mosaic") != null && params.get("mosaic") == Boolean.TRUE) {
+                            	shpGeoResource.canAdaptMosaic(true);
+                        	}
                             members.add(shpGeoResource);
                         }
                 }
