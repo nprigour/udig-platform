@@ -18,6 +18,7 @@ import java.net.URL;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
@@ -74,6 +75,8 @@ public class ShpGeoResourceImpl extends IGeoResource {
     private URL identifier;
     private ID id;
 
+    private boolean mosaicAdapt = false;
+    
     /**
      * Construct <code>ShpGeoResourceImpl</code>.
      *
@@ -130,12 +133,6 @@ public class ShpGeoResourceImpl extends IGeoResource {
         }
         if (adaptee.isAssignableFrom(IGeoResourceInfo.class)) {
             return adaptee.cast(createInfo(monitor));
-        }
-        if (adaptee.isAssignableFrom(SimpleFeatureStore.class)) {
-            SimpleFeatureSource fs = featureSource(monitor);
-            if (fs instanceof SimpleFeatureStore) {
-                return adaptee.cast(fs);
-            }
         }
         if (adaptee.isAssignableFrom(SimpleFeatureStore.class)) {
             SimpleFeatureSource fs = featureSource(monitor);
@@ -392,6 +389,9 @@ public class ShpGeoResourceImpl extends IGeoResource {
         if (adaptee == null) {
             return false;
         }
+        if (adaptee == AbstractGridCoverage2DReader.class && !mosaicAdapt) {
+        	return false;
+        }
         return (adaptee.isAssignableFrom(IGeoResourceInfo.class) || adaptee.isAssignableFrom(SimpleFeatureStore.class)
                 || adaptee.isAssignableFrom(FeatureSource.class) 
                 || adaptee.isAssignableFrom(SimpleFeatureSource.class) 
@@ -407,4 +407,11 @@ public class ShpGeoResourceImpl extends IGeoResource {
     protected ShpGeoResourceInfo createInfo( IProgressMonitor monitor ) throws IOException {
         return new ShpGeoResourceInfo(this);
     }
+
+	/**
+	 * @param adapt the mosaicAdapt to set
+	 */
+	void canAdaptMosaic(boolean adapt) {
+		this.mosaicAdapt = adapt;
+	}
 }
