@@ -11,13 +11,20 @@
 		<relativePath>../../pom-libs.xml</relativePath>
 	</parent>
 
-	<!-- This script was created to automagically download the external libs 
-		required for uDig to build and export correctly. To download the required 
-		libraries, use: mvn package -f pom-libs.xml After they have downloaded, make 
-		sure you: - refresh the org.locationtech.udig.libs project in Eclipse; - 
-		verify the classpath (Manfiest Runtime tab) references the libs; - ensure 
-		the lib versions in the classpath are also correct. -->
+    <!-- 
+        This script was created to automagically download the external libs 
+        required for uDig to build and export correctly. 
 
+        To download the required libraries, use: 
+
+            mvn package -f pom-libs.xml 
+
+        After they have downloaded, make sure you:
+          - refresh the org.locationtech.udig.libs project in Eclipse;
+          - verify the classpath (Manfiest Runtime tab) references the libs;
+          - ensure the lib versions in the classpath are also correct. 
+     -->
+     
 	<artifactId>pom-libs.download.geotools</artifactId>
 	<name>uDig 3rd-Party Core libraries Download</name>
 
@@ -25,7 +32,7 @@
 
 	<properties>
 		<!-- see geotools root pom for details -->
-		<geotools.version>19.0</geotools.version>
+		<geotools.version>19.1</geotools.version>
 		<imageio-ext.version>1.1.20</imageio-ext.version>
 		<jaiext.version>1.0.20</jaiext.version>
 		<jfreechart.version>1.0.13</jfreechart.version>
@@ -238,9 +245,13 @@
 			<version>${geotools.version}</version>
 		</dependency>
 
-		<!-- gt-11: shapefile-ng was merged in shapefile <dependency> <groupId>org.geotools</groupId> 
-			<artifactId>gt-shapefile-ng</artifactId> <version>${geotools.version}</version> 
-			</dependency> -->
+    <!-- gt-11: shapefile-ng was merged in shapefile
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-shapefile-ng</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+    -->
 
 		<dependency>
 			<groupId>org.geotools</groupId>
@@ -327,9 +338,12 @@
 		</dependency>
 
 		<!-- pending -->
-		<!--<dependency> <groupId>org.geotools</groupId> <artifactId>gt-app-schema</artifactId> 
-			<version>${geotools.version}</version> </dependency> -->
-
+        <!--<dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-app-schema</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>-->
+        
 		<!-- geotools unsupported modules that we only need for some community 
 			modules? -->
 		<dependency>
@@ -338,10 +352,12 @@
 			<version>${geotools.version}</version>
 		</dependency>
 
-		<!-- | geotools modules required for geoscript | since release versions 
-			only referenceing the initial gt release version (and not patches) | we have 
-			to manage these dependencies to have the same version like all other | gt-dependencies 
-			(geotools.version) -->
+        <!-- 
+          | geotools modules required for geoscript
+          | since release versions only referenceing the initial gt release version (and not patches)
+          | we have to manage these dependencies to have the same version like all other 
+          | gt-dependencies (geotools.version)
+          -->
 
 		<dependency>
 			<groupId>org.geotools</groupId>
@@ -378,11 +394,17 @@
 			<artifactId>gt-geobuf</artifactId>
 			<version>${geotools.version}</version>
 		</dependency>
-
+	
 		<dependency>
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-ogr-jni</artifactId>
 			<version>${geotools.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.gdal</groupId>
+					<artifactId>gdal</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- others -->
@@ -519,10 +541,17 @@
 			<artifactId>gt-grassraster</artifactId>
 			<version>${geotools.version}</version>
 		</dependency>
-		<!--<dependency> <groupId>org.geotools</groupId> <artifactId>gt-coverage-api</artifactId> 
-			<version>${geotools.version}</version> </dependency> <dependency> <groupId>eu.hydrologis.jgrass</groupId> 
-			<artifactId>jgrassgears</artifactId> <version>0.1-SNAPSHOT</version> </dependency> -->
-
+        <!--<dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-coverage-api</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.hydrologis.jgrass</groupId>
+            <artifactId>jgrassgears</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>-->
+        
 		<!-- jfreechart -->
 		<dependency>
 			<groupId>jfree</groupId>
@@ -552,18 +581,42 @@
 		</dependency>
 
 		<!-- these may already be accounted for by the above plug-ins -->
-		<!--<dependency> <groupId>org.geotools.xsd</groupId> <artifactId>gt-gml2</artifactId> 
-			<version>${geotools.version}</version> </dependency> <dependency> <groupId>org.geotools.xsd</groupId> 
-			<artifactId>gt-gml3</artifactId> <version>${geotools.version}</version> </dependency> 
-			<dependency> <groupId>org.geotools.xsd</groupId> <artifactId>gt-core</artifactId> 
-			<version>${geotools.version}</version> </dependency> <dependency> <groupId>org.geotools.xsd</groupId> 
-			<artifactId>gt-xsd-wfs</artifactId> <version>${geotools.version}</version> 
-			</dependency> <dependency> <groupId>org.geotools.xsd</groupId> <artifactId>gt-xsd-wps</artifactId> 
-			<version>${geotools.version}</version> </dependency> <dependency> <groupId>org.geotools.xsd</groupId> 
-			<artifactId>gt-ows</artifactId> <version>${geotools.version}</version> </dependency> 
-			<dependency> <groupId>org.geotools.xsd</groupId> <artifactId>gt-filter</artifactId> 
-			<version>${geotools.version}</version> </dependency> -->
-
+        <!--<dependency>
+            <groupId>org.geotools.xsd</groupId>
+            <artifactId>gt-gml2</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools.xsd</groupId>
+            <artifactId>gt-gml3</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools.xsd</groupId>
+            <artifactId>gt-core</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools.xsd</groupId>
+            <artifactId>gt-xsd-wfs</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools.xsd</groupId>
+            <artifactId>gt-xsd-wps</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools.xsd</groupId>
+            <artifactId>gt-ows</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools.xsd</groupId>
+            <artifactId>gt-filter</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>-->
+        
 		<!-- Java Advanced Imaging is bundled into our JRE - as such we don't need 
 			them to be downloaded now; however we must run with: -Dosgi.parentClassloader=ext -->
 		<dependency>
@@ -596,8 +649,7 @@
 			<version>${geotools.version}</version>
 		</dependency>
 
-		<!-- These GeoTools dependencies are required for compile only we are using 
-			gt-epsg-hsql -->
+		<!-- These GeoTools dependencies are required for compile only we are using gt-epsg-hsql -->
 		<dependency>
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-epsg-wkt</artifactId>
@@ -624,12 +676,16 @@
 			<version>5.1.46</version>
 		</dependency>
 
-		<!-- We get this from the base RCP as such they are already provided by 
-			our org.locationtech.udig.libs dependencies in the MANIFEST.MF and we don't 
-			need to ask for them to be downloaded now. -->
-		<!--<dependency> <groupId>org.apache</groupId> <artifactId>xerces</artifactId> 
-			<version>2.7.1</version> <scope>provided</scope> </dependency> -->
-
+        <!-- We get this from the base RCP as such they are already provided by 
+        our org.locationtech.udig.libs dependencies in the MANIFEST.MF 
+        and we don't need to ask for them to be downloaded now. -->
+        <!--<dependency>
+            <groupId>org.apache</groupId>
+            <artifactId>xerces</artifactId>
+            <version>2.7.1</version>
+            <scope>provided</scope>
+        </dependency>-->
+        
 		<dependency>
 			<groupId>xerces</groupId>
 			<artifactId>xercesImpl</artifactId>
@@ -849,9 +905,13 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- antlr dependencies ================== Both groovy and jiffle depend 
-			on the antlr.jar, while only requring the antlr runtime. -->
-		<dependency>
+        <!-- antlr dependencies
+             ==================
+             
+             Both groovy and jiffle depend on the antlr.jar, while only
+             requring the antlr runtime.
+        -->
+        <dependency>
 			<groupId>org.antlr</groupId>
 			<artifactId>antlr</artifactId>
 			<version>3.3</version>
@@ -866,11 +926,21 @@
 			need to be added to the libs runtime environment. The spatial toolbox needs 
 			them to be there as library but will pick them on its own. -->
 
-		<!-- tools.jar provided by refresh.xml -->
-		<!-- <dependency> <groupId>com.sun</groupId> <artifactId>tools</artifactId> 
-			<version>1.6.0_25</version> <scope>provided</scope> </dependency> -->
-		<!-- <dependency> <groupId>org.codehaus.groovy</groupId> <artifactId>groovy-all</artifactId> 
-			<version>1.7.1</version> </dependency> -->
+        <!-- tools.jar provided by refresh.xml -->
+        <!-- <dependency>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+          <version>1.6.0_25</version>
+          <scope>provided</scope>
+        </dependency> -->
+        <!-- 
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+        -->
+        
 		<dependency>
 			<groupId>com.sun.jna</groupId>
 			<artifactId>jna</artifactId>
