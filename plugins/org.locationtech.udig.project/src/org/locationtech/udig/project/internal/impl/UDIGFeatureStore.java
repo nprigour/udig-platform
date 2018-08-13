@@ -319,6 +319,12 @@ public class UDIGFeatureStore implements FeatureStore<FeatureType,Feature>, UDIG
      * @throws IOException
      */
 	private void handleException(Exception e) throws IOException {
+		
+		EditManager editManager = (EditManager) layer.getMap().getEditManager();
+        Transaction transaction = editManager.getTransaction();
+        transaction.rollback();
+        editComplete();
+        
 		ProjectPlugin.getPlugin().log(e);
 		PlatformGIS.syncInDisplayThread(new Runnable() {
 			@Override
