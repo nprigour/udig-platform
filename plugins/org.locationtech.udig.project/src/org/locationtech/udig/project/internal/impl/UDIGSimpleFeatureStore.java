@@ -406,6 +406,13 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
      * @throws IOException
      */
 	private void handleException(Exception e) throws IOException {
+		
+		//rollback  if exception received
+		EditManager editManager = (EditManager) layer.getMap().getEditManager();
+        Transaction transaction = editManager.getTransaction();
+        transaction.rollback();
+        editComplete();
+              
 		ProjectPlugin.getPlugin().log(e);
 		PlatformGIS.syncInDisplayThread(new Runnable() {
 			@Override
