@@ -346,7 +346,7 @@ public final class LayerUtil {
 	 */
 	public static boolean isCompatible(ILayer layer, List<?> geometries) {
 
-		if (layer==null){
+		if (layer==null || layer.getSchema() == null) {
 			return false;
 		}
 		Class<?> type = layer.getSchema().getGeometryDescriptor().getType().getBinding();
