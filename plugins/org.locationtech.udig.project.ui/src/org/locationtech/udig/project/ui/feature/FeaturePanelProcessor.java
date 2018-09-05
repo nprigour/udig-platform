@@ -68,6 +68,25 @@ public class FeaturePanelProcessor {
         }
         return search;
     }
+    
+    /**
+     * List of FeaturePanelEntry that can match the provided element (usually a SimpleFeature).
+     * <p>
+     * You can use these FeaturePanelEntry to make feature panels to create the indicated element.
+     * 
+     * @param element
+     * @return
+     */
+    public List<FeaturePanelEntry> searchCreateOnly( Object element  ) {
+        List<FeaturePanelEntry> search = new ArrayList<FeaturePanelEntry>();
+        for( FeaturePanelEntry entry : featurePanelList ) {
+            if (entry.isCreateFeature() && entry.isMatch(element)) {
+                search.add(entry);
+            }
+        }
+        return search;
+    }
+    
     public List<FeaturePanelEntry> check( IFeatureSite site ) {
         List<FeaturePanelEntry> search = new ArrayList<FeaturePanelEntry>();
         for( FeaturePanelEntry entry : featurePanelList ) {
