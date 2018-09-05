@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.locationtech.udig.core.internal.FeatureUtils;
+import org.locationtech.udig.project.AdaptableFeature;
 import org.locationtech.udig.project.ILayer;
 import org.locationtech.udig.project.command.AbstractCommand;
 import org.locationtech.udig.project.command.UndoableMapCommand;
@@ -20,8 +21,10 @@ import org.locationtech.udig.project.internal.Layer;
 import org.locationtech.udig.project.internal.commands.edit.AddFeatureCommand;
 import org.locationtech.udig.project.ui.ApplicationGIS;
 import org.locationtech.udig.project.ui.PlatformGIS;
+import org.locationtech.udig.project.ui.feature.FeatureCreatePanelWizard;
 import org.locationtech.udig.project.ui.feature.FeaturePanelEntry;
 import org.locationtech.udig.tool.edit.internal.Messages;
+import org.locationtech.udig.tools.edit.EditToolHandler;
 import org.locationtech.udig.tools.edit.support.EditBlackboard;
 import org.locationtech.udig.tools.edit.support.EditGeom;
 import org.locationtech.udig.tools.edit.support.EditUtils;
@@ -33,9 +36,16 @@ import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.window.Window;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+
+import com.vividsolutions.jts.geom.Envelope;
+
 import org.geotools.data.FeatureEvent;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
 
@@ -82,11 +92,26 @@ public class CreateDialogAndSelectNewFeature extends AbstractCommand implements 
         final boolean create[] = new boolean[1];
         create[0] = false;
         
-        Display display = PlatformUI.getWorkbench().getDisplay();
+        Object initialGeometry = feature.getDefaultGeometry();
+
+        final Display display = PlatformUI.getWorkbench().getDisplay();
         display.syncExec( new Runnable(){            
             public void run() {
-                boolean yes = MessageDialog.openConfirm(null, "New Feature", "Panels available "+panels.size() );
-                create[0] = yes;
+                FeatureCreatePanelWizard featureWizard = new FeatureCreatePanelWizard(
+                        panels, new AdaptableFeature(feature, layer));
+
+                //create the Wizard Dialog start it.
+                //////////////////////////////////////////
+                WizardDialog dialog = new WizardDialog(
+                        new Shell(), featureWizard);
+                dialog.setMinimumPageSize(400, 600);
+                dialog.addPageChangingListener(featureWizard);
+                dialog.setBlockOnOpen(true);
+                int returnCode = dialog.open();
+                ///////////////////////////////////////////
+
+                //boolean yes = MessageDialog.openConfirm(null, "New Feature", "Panels available "+panels.size() );
+                create[0] = (returnCode == Window.OK);
             }            
         });
         if( create[0] == false ){
@@ -106,10 +131,27 @@ public class CreateDialogAndSelectNewFeature extends AbstractCommand implements 
             this.oldFeature = getMap().getEditManager().getEditFeature();
             this.oldLayer = getMap().getEditManager().getEditLayer();
             this.oldID = geom.getFeatureIDRef().get();
-            geom.getFeatureIDRef().set(addFeatureCommand.getFid());
 
             getMap().getEditManagerInternal().setEditFeature(addFeatureCommand.getNewFeature(),
                     layer);
+            
+            //SPECIAL HANDLING for the case that GEOMETRY has changed
+            System.out.println("Geom Previous:" + geom + ", "+ geom.getFeatureEnvelope());
+            if (feature.getDefaultGeometry() == initialGeometry) {
+                geom.getFeatureIDRef().set(addFeatureCommand.getFid());
+            } else {
+                System.out.println("Geom has changed:" + geom);
+                //if feature geometry has changed during creation we do not
+                //set the FeatureID since we do not want the setGeometryCommand(..)
+                //of AcceptChangesBehaviour class to set back the geometry to the initial one. 
+                //Instead we nullify the CURRENT_SHAPE key in the EditBlackboard  
+                geom = new EditGeom(
+                                geom.getEditBlackboard(), 
+                                addFeatureCommand.getFid(), 
+                                new ReferencedEnvelope(addFeatureCommand.getNewFeature().getBounds())); 
+                getMap().getBlackboard().put(EditToolHandler.CURRENT_SHAPE, null);
+            }
+            
             oldSelection = layer.getFilter();
             Filter filter = FeatureUtils.id(addFeatureCommand.getFid());
 
@@ -120,7 +162,10 @@ public class CreateDialogAndSelectNewFeature extends AbstractCommand implements 
                 layer.eSetDeliver(prev);
             } else {
                 EditUtils.instance.refreshLayer(layer, Collections.singleton(addFeatureCommand
-                        .getFid()), null, false, true);
+                        .getFid()), 
+                        (geom.getFeatureEnvelope() == null ? 
+                                new Envelope() : new Envelope(geom.getFeatureEnvelope())), 
+                         false, true);
 
             }
             // since the layer didn't send an event (see eSetDeliver() above) we need to send the
@@ -141,8 +186,10 @@ public class CreateDialogAndSelectNewFeature extends AbstractCommand implements 
 
         layer.eSetDeliver(prev);
         int index = featureChanges.size() - 1;
-        FeatureEvent featureEvent = featureChanges.get(index);
-        featureChanges.set(index, featureEvent);
+        if( index != -1 ) {
+            FeatureEvent featureEvent = featureChanges.get(index);
+            featureChanges.set(index, featureEvent);
+        }
     }
 
     public String getName() {
