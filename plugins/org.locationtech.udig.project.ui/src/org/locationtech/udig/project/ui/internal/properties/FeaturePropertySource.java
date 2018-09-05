@@ -367,7 +367,7 @@ public class FeaturePropertySource implements IPropertySource2 {
     private Object getGeomProperty( Geometry id ) {
         Object geom = geomProperties.get(id);
         if (geom == null) {
-            geom = new GeomPropertySource(id);
+            geom = new GeomPropertySource(id, feature);
             geomProperties.put(id, geom);
         }
         return geom;
