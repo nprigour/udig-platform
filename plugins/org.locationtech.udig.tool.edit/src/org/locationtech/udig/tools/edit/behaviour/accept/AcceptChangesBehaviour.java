@@ -238,6 +238,11 @@ public class AcceptChangesBehaviour implements Behaviour {
                     int attributeCount = schema.getAttributeCount();
                     SimpleFeature feature;
                     try {
+                        //use the following if the FID must be provided by the user
+                        //SimpleFeatureBuilder b = new SimpleFeatureBuilder(schema);
+                        //b.featureUserData(Hints.USE_PROVIDED_FID, Boolean.TRUE);
+                        //feature = b.buildFeature(String.valueOf(new Random().nextInt()));
+                        
                         feature = SimpleFeatureBuilder.template(schema, "newFeature"
                                 + new Random().nextInt());
                         // feature = SimpleFeatureBuilder.build(schema, new
@@ -249,21 +254,23 @@ public class AcceptChangesBehaviour implements Behaviour {
                     }
                     
                     CreateFeatureCommand.runFeatureCreationInterceptors(feature);
-                    
-                    // FeaturePanelProcessor panels = ProjectUIPlugin.getDefault()
-                    // .getFeaturePanelProcessor();
-                    // List<FeaturePanelEntry> popup = panels.search(schema);
-                    // if (popup.isEmpty()) {
-                    CreateAndSelectNewFeature newFeatureCommand = new CreateAndSelectNewFeature(
-                            handler.getCurrentGeom(), feature, layer, deselectCreatedFeatures);
-                    commands.add(newFeatureCommand);
-                    // } else {
-                    // CreateDialogAndSelectNewFeature newFeatureCommand = new
-                    // CreateDialogAndSelectNewFeature(
-                    // handler.getCurrentGeom(), feature, layer, deselectCreatedFeatures,
-                    // popup);
-                    // commands.add(newFeatureCommand);
-                    // }
+
+                    UndoableMapCommand createCommand = null;
+                    FeaturePanelProcessor panels = ProjectUIPlugin.getDefault()
+                            .getFeaturePanelProcessor();
+                    //obtain only the create panels
+                    List<FeaturePanelEntry> popup = panels.searchCreateOnly(schema);
+                    if (popup.isEmpty()) {
+                        createCommand = new CreateAndSelectNewFeature(
+                                handler.getCurrentGeom(), feature, layer, deselectCreatedFeatures);
+                    } else {
+                        createCommand = new
+                                CreateDialogAndSelectNewFeature(
+                                        handler.getCurrentGeom(), feature, layer, deselectCreatedFeatures,
+                                        popup);
+                    }
+                    commands.add(createCommand);
+
                 } else {
                     // not creating it so don't need to set it.
                     UndoableMapCommand setGeometryCommand = new SetGeometryCommand(editGeom
