@@ -4,6 +4,8 @@
 	<extension
 		point="org.eclipse.ui.startup">
       <startup class="org.locationtech.udig.tools.merge.MergeStartup"/>
+      <startup class="org.locationtech.udig.tools.clip.ClipStartup"/>
+      
    </extension>
    <extension
          point="org.locationtech.udig.project.ui.tool">
@@ -122,6 +124,31 @@
              </and>
          </enablement>
       </modalTool>
+     <modalTool
+            categoryId="org.locationtech.udig.tool.edit.feature"
+            class="org.locationtech.udig.tools.clip.ClipTool"
+            icon="icons/etool16/clip_feature_mode.gif"
+            id="org.locationtech.udig.tools.clip.ClipTool"
+            largeIcon="icons/etool24/clip_24.png"
+            name="%clip.name"
+            onToolbar="true"
+            toolCursorId="arrowCursor"
+            tooltip="%clip.tooltip">
+			<enablement>
+		      	<and>
+		            <property propertyId="FeatureStoreResourceProperty" expectedValue=""/>
+		            <property propertyId="InteractionProperty" expectedValue="interaction_edit"/>
+		             <or>
+		                <property propertyId="GeometryType" expectedValue="com.vividsolutions.jts.geom.MultiLineString"/>
+		                <property propertyId="GeometryType" expectedValue="com.vividsolutions.jts.geom.LineString"/>
+		                <property propertyId="GeometryType" expectedValue="com.vividsolutions.jts.geom.MultiPolygon"/>
+		                <property propertyId="GeometryType" expectedValue="com.vividsolutions.jts.geom.Polygon"/>
+		                <property propertyId="GeometryType" expectedValue="com.vividsolutions.jts.geom.MultiPoint"/>
+		                <property propertyId="GeometryType" expectedValue="com.vividsolutions.jts.geom.Point"/>
+		             </or>
+		         </and>
+	      	</enablement>
+      </modalTool>
    </extension>
 
    <extension
@@ -143,6 +170,15 @@
             name="%merge.view.name"
             restorable="true">
       </view>
+      <view
+            allowMultiple="false"
+            category="org.locationtech.udig.project.ui.project"
+            class="org.locationtech.udig.tools.clip.internal.view.ClipView"
+            icon="icons/etool16/clip_feature_mode.gif"
+            id="org.locationtech.udig.tools.clip.internal.view.ClipView"
+            name="%clip.operation.name"
+            restorable="true">
+      </view> 
    </extension>
    <extension
          point="org.locationtech.udig.ui.operation">
@@ -155,6 +191,15 @@
             name="%merge.operation.name"
             targetClass="org.geotools.data.FeatureSource">
       </operation>
+      <operation
+            class="org.locationtech.udig.tools.clip.ClipOperation"
+            description="Clip the selected features"
+            enablesFor="1"
+            icon="icons/etool16/clip_feature_mode.gif"
+            id="org.locationtech.udig.tools.clip.clipoperation"
+            name="%clip.operation.name"
+            targetClass="org.geotools.data.FeatureSource">
+      </operation> 
    </extension>
    <extension
          point="org.eclipse.ui.perspectiveExtensions">
