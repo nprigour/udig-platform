@@ -27,45 +27,55 @@ import org.opengis.feature.simple.SimpleFeature;
  * @since 0.9.0
  */
 public class DialogEditor implements IUDIGDialogPage {
-	private IToolContext context;
+    private IToolContext context;
 
-	private PropertySheetPage featureDisplay;
+    private PropertySheetPage featureDisplay;
 
-	private PropertySheetEntry entry;
+    private PropertySheetEntry entry;
 
-	public DialogEditor() {
-		featureDisplay = new PropertySheetPage();
-		entry = new PropertySheetEntry();
-		featureDisplay.setRootEntry(entry);
-	}
-	/**
-	 * @see org.locationtech.udig.project.ui.IUDIGView#setContext()
-	 */
-	public void setContext(IToolContext context) {
-		this.context = context;
-	}
+    public DialogEditor() {
+        featureDisplay = new PropertySheetPage();
+        entry = new PropertySheetEntry();
+        featureDisplay.setRootEntry(entry);
+    }
+    /**
+     * @see org.locationtech.udig.project.ui.IUDIGView#setContext()
+     */
+    public void setContext(IToolContext context) {
+        this.context = context;
+    }
 
-	/**
-	 * @see org.locationtech.udig.project.ui.IUDIGView#getContext()
-	 */
-	public IToolContext getContext() {
-		return context;
-	}
+    /**
+     * @see org.locationtech.udig.project.ui.IUDIGView#getContext()
+     */
+    public IToolContext getContext() {
+        return context;
+    }
 
-	public void createControl(Composite parent) {
-		featureDisplay.createControl(parent);	
-	}
+    public void createControl(Composite parent) {
+        featureDisplay.createControl(parent);	
+    }
 
-	public Point getPreferredSize() {
-		return new Point(400, 600);
-	}
+    public Point getPreferredSize() {
+        return new Point(400, 600);
+    }
 
-	public Control getControl() {
-		return featureDisplay.getControl();
-	}
+    public Control getControl() {
+        return featureDisplay.getControl();
+    }
 
-	public void setFeature(SimpleFeature feature) {
-		entry.setValues(new Object[]{feature});
-	}
+    public void setFeature(SimpleFeature feature) {
+        entry.setValues(new Object[]{feature});
+    }
+
+    @Override
+    public boolean performCompleteAction() {
+        return true;
+    }
+    @Override
+    public boolean performCancelAction() {
+
+        return true;
+    }
 
 }

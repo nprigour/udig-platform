@@ -11,10 +11,12 @@ package org.locationtech.udig.project.ui.internal;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IConfigurationElement;
+
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
@@ -70,6 +72,9 @@ public class FeatureTypeMatch {
                 AttributeDescriptor attr = featureType.getDescriptor(name);
                 if (type == null || attr == null)
                     return null;
+                //special case for numbers
+                if (type == Number.class && type.isAssignableFrom(attr.getType().getBinding())) 
+                    return attr;
                 if (type != attr.getType().getBinding())
                     return null;
                 return attr;
@@ -106,7 +111,7 @@ public class FeatureTypeMatch {
         }
     };
     private URI namespace;
-    private String typeName;
+    private List<String> typeName; 
     private AttributeMatcher[] attributes;
 
     FeatureTypeMatch() {
@@ -121,7 +126,9 @@ public class FeatureTypeMatch {
     public FeatureTypeMatch( IConfigurationElement element ) {
         if (element.getChildren("typeName").length == 1) { //$NON-NLS-1$
             IConfigurationElement typeName = element.getChildren("typeName")[0]; //$NON-NLS-1$
-            this.typeName = typeName.getAttribute("name"); //$NON-NLS-1$
+            //to allow for multiple typeName matches by a single matcher. Actual typeNames
+            //must be separated by commas
+            this.typeName = Arrays.asList(typeName.getAttribute("name").split(",")); //$NON-NLS-1$
             try {
                 this.namespace = new URI(typeName.getAttribute("namespace")); //$NON-NLS-1$
             } catch (Exception e) {
@@ -189,50 +196,55 @@ public class FeatureTypeMatch {
         }
       }
 
-        if (schema != null) {
-            Name featureName = schema.getName();
-            if (namespace != null) {
+      if (schema != null) {
+          Name featureName = schema.getName();
+          if (namespace != null) {
+              if (namespace.toString().equals(featureName.getNamespaceURI())
+                      && typeName.contains(featureName.getLocalPart())) {
+                  return PERFECT;
+                  //also consider a perfect match the case where '*' 
+                  //is provided in the namespace  
+              } else if ("*".equals(namespace.toString())  //$NON-NLS-1$
+                      && typeName.contains(featureName.getLocalPart())) {
+                  return PERFECT;
+              }        
+              return NO_MATCH;
+          } 
+          if (attributes.length == 0) {
+              return NO_MATCH;
+          }
+          
+          int accuracy = 0;
+          accuracy++;
+          List<AttributeDescriptor> matched = new ArrayList<AttributeDescriptor>();
+          // 1st pass check all named attributes are accounted for
+          for( AttributeMatcher current : attributes ) {
+              if (current.name == null) {
+                  continue; // skip
+              }
+              AttributeDescriptor currentMatch = current.match(schema, matched);
+              if (currentMatch == null) {
+                  return NO_MATCH;
+              }
+              matched.add(currentMatch);
+          }
+          // section pass check unnamed attributes ... match default geometry type?
+          for( AttributeMatcher current : attributes ) {
+              if (current.name != null) {
+                  continue;
+              }
+              accuracy++;
 
-                if (namespace.compareTo(URI.create(featureName.getNamespaceURI())) == 0
-                        && typeName.equals(featureName.getLocalPart())) {
-                    return PERFECT;
-                }
-                return NO_MATCH;
-            }
-            if (attributes.length == 0) {
-                return NO_MATCH;
-            }
-            int accuracy = 0;
-            accuracy++;
-            List<AttributeDescriptor> matched = new ArrayList<AttributeDescriptor>();
-            // 1st pass check all named attributes are accounted for
-            for( AttributeMatcher current : attributes ) {
-                if (current.name == null) {
-                    continue; // skip
-                }
-                AttributeDescriptor currentMatch = current.match(schema, matched);
-                if (currentMatch == null) {
-                    return NO_MATCH;
-                }
-                matched.add(currentMatch);
-            }
-            // section pass check unnamed attributes ... match default geometry type?
-            for( AttributeMatcher current : attributes ) {
-                if (current.name != null) {
-                    continue;
-                }
-                accuracy++;
-
-                AttributeDescriptor currentMatch = current.match(schema, matched);
-                if (currentMatch == null) {
-                    return NO_MATCH;
-                }
-                matched.add(currentMatch);
-            }
-            accuracy += schema.getAttributeCount() - matched.size();
-            return accuracy;
-        }
-        return NO_MATCH;
+              AttributeDescriptor currentMatch = current.match(schema, matched);
+              if (currentMatch == null) {
+                  return NO_MATCH;
+              }
+              matched.add(currentMatch);
+          }
+          accuracy += schema.getAttributeCount() - matched.size();
+          return accuracy;
+      }
+      return NO_MATCH;
     }
 
     @Override

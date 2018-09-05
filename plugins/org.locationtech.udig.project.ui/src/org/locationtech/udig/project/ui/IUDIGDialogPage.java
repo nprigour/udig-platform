@@ -60,4 +60,18 @@ public interface IUDIGDialogPage {
      * @param feature
      */
     void setFeature( SimpleFeature feature );
+    
+    /**
+     * actions to be performed prior to completion (press of Dialog's OK button).
+     * 
+     * @return a boolean indicating whether we can proceed or not
+     */
+    boolean performCompleteAction();
+    
+    /**
+     * actions to be performed prior to cancellation (press of Dialog's cancel button).
+     * 
+     * @return a boolean indicating whether a problem occurred  or not
+     */
+    boolean performCancelAction();
 }

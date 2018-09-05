@@ -38,6 +38,9 @@ import org.locationtech.udig.project.internal.commands.edit.SetGeometryCommand;
 import org.locationtech.udig.project.render.displayAdapter.IMapDisplay;
 import org.locationtech.udig.project.ui.IAnimation;
 import org.locationtech.udig.project.ui.commands.DrawCommandFactory;
+import org.locationtech.udig.project.ui.feature.FeaturePanelEntry;
+import org.locationtech.udig.project.ui.feature.FeaturePanelProcessor;
+import org.locationtech.udig.project.ui.internal.ProjectUIPlugin;
 import org.locationtech.udig.tool.edit.internal.Messages;
 import org.locationtech.udig.tools.edit.Behaviour;
 import org.locationtech.udig.tools.edit.EditPlugin;
@@ -46,6 +49,7 @@ import org.locationtech.udig.tools.edit.EditToolHandler;
 import org.locationtech.udig.tools.edit.animation.GeometryOperationAnimation;
 import org.locationtech.udig.tools.edit.commands.AddVertexCommand;
 import org.locationtech.udig.tools.edit.commands.CreateAndSelectNewFeature;
+import org.locationtech.udig.tools.edit.commands.CreateDialogAndSelectNewFeature;
 import org.locationtech.udig.tools.edit.commands.CreateNewOrSelectExitingFeatureCommand;
 import org.locationtech.udig.tools.edit.commands.SetEditGeomChangedStateCommand;
 import org.locationtech.udig.tools.edit.commands.SetEditStateCommand;
@@ -56,6 +60,7 @@ import org.locationtech.udig.tools.edit.support.IsBusyStateProvider;
 import org.locationtech.udig.tools.edit.support.PrimitiveShape;
 import org.locationtech.udig.tools.edit.support.ShapeType;
 import org.opengis.feature.IllegalAttributeException;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -232,6 +237,11 @@ public class AcceptChangesBehaviour implements Behaviour {
                     int attributeCount = schema.getAttributeCount();
                     SimpleFeature feature;
                     try {
+                        //use the following if the FID must be provided by the user
+                        //SimpleFeatureBuilder b = new SimpleFeatureBuilder(schema);
+                        //b.featureUserData(Hints.USE_PROVIDED_FID, Boolean.TRUE);
+                        //feature = b.buildFeature(String.valueOf(new Random().nextInt()));
+                        
                         feature = SimpleFeatureBuilder.template(schema, "newFeature"
                                 + new Random().nextInt());
                         // feature = SimpleFeatureBuilder.build(schema, new
@@ -244,20 +254,22 @@ public class AcceptChangesBehaviour implements Behaviour {
                     
                     CreateFeatureCommand.runFeatureCreationInterceptors(feature);
                     
-                    // FeaturePanelProcessor panels = ProjectUIPlugin.getDefault()
-                    // .getFeaturePanelProcessor();
-                    // List<FeaturePanelEntry> popup = panels.search(schema);
-                    // if (popup.isEmpty()) {
-                    CreateAndSelectNewFeature newFeatureCommand = new CreateAndSelectNewFeature(
-                            handler.getCurrentGeom(), feature, layer, deselectCreatedFeatures);
-                    commands.add(newFeatureCommand);
-                    // } else {
-                    // CreateDialogAndSelectNewFeature newFeatureCommand = new
-                    // CreateDialogAndSelectNewFeature(
-                    // handler.getCurrentGeom(), feature, layer, deselectCreatedFeatures,
-                    // popup);
-                    // commands.add(newFeatureCommand);
-                    // }
+                    UndoableMapCommand createCommand = null;
+                    FeaturePanelProcessor panels = ProjectUIPlugin.getDefault()
+                            .getFeaturePanelProcessor();
+                    //obtain only the create panels
+                    List<FeaturePanelEntry> popup = panels.searchCreateOnly(schema);
+                    if (popup.isEmpty()) {
+                        createCommand = new CreateAndSelectNewFeature(
+                                handler.getCurrentGeom(), feature, layer, deselectCreatedFeatures);
+                    } else {
+                        createCommand = new
+                                CreateDialogAndSelectNewFeature(
+                                        handler.getCurrentGeom(), feature, layer, deselectCreatedFeatures,
+                                        popup);
+                    }
+                    commands.add(createCommand);
+
                 } else {
                     // not creating it so don't need to set it.
                     UndoableMapCommand setGeometryCommand = new SetGeometryCommand(editGeom

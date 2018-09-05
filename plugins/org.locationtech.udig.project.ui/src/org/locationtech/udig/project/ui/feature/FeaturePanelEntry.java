@@ -41,6 +41,7 @@ public class FeaturePanelEntry {
     private String afterPanel;
     private IConfigurationElement definition;
     private boolean indented;
+    private boolean createFeature;
     private FeatureTypeMatch matcher;
     private String category;
     private IFeaturePanelCheck check;
@@ -58,6 +59,9 @@ public class FeaturePanelEntry {
         name = definition.getAttribute("name");
         title = definition.getAttribute("title");
         description = definition.getAttribute("description");
+        String isCreate = definition.getAttribute("createFeature");
+        createFeature = isCreate == null ? 
+                        false : Boolean.valueOf(isCreate).booleanValue();
 
         this.definition = definition;
 
@@ -152,6 +156,10 @@ public class FeaturePanelEntry {
         return indented;
     }
 
+    public boolean isCreateFeature() {
+        return createFeature;
+    }
+    
     public String getCategory() {
         return category;
     }

@@ -28,6 +28,7 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -453,12 +454,14 @@ public class FeatureEditorExtensionProcessor {
          */
         protected EditorDialog( Shell parentShell, IUDIGDialogPage page ) {
             super(parentShell);
+            setShellStyle(getShellStyle() | SWT.SHELL_TRIM);
             this.page = page;
         }
 
         /**
          * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
          */
+        @Override
         protected Control createDialogArea( Composite parent ) {
             Composite composite = (Composite) super.createDialogArea(parent);
             page.createControl(composite);
@@ -467,6 +470,35 @@ public class FeatureEditorExtensionProcessor {
             page.getControl().setLayoutData(data);
             return composite;
         }
+
+        /**
+         * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
+         */
+        @Override
+        protected Point getInitialSize() {
+            return page.getPreferredSize();
+        }
+
+        /**
+         * @see org.eclipse.jface.dialogs.Dialog#cancelPressed()
+         */
+        @Override
+        protected void cancelPressed() {
+            if (page.performCancelAction()) {
+                super.cancelPressed();
+            }
+        }
+
+        /**
+         * @see org.eclipse.jface.dialogs.Dialog#okPressed()
+         */
+        @Override
+        protected void okPressed() {
+            if (page.performCompleteAction()) {
+                super.okPressed();
+            }
+        }      
+
 
     }
 
