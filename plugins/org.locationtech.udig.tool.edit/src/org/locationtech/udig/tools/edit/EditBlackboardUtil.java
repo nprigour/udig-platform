@@ -145,8 +145,19 @@ public class EditBlackboardUtil {
                     EditPlugin.log("", e); //$NON-NLS-1$
                     layerToMapTransform = IDENTITY;
                 }
+                //extra code to check for a null to Screen AffineTransform
+                AffineTransform toScreenTransform;
+                try {
+                    toScreenTransform = context.worldToScreenTransform();
+                    if (toScreenTransform == null) {
+                        toScreenTransform = AffineTransform.getTranslateInstance(0, 0);
+                    }
+                } catch (Exception e) {
+                    EditPlugin.log("", e); //$NON-NLS-1$
+                    toScreenTransform = AffineTransform.getTranslateInstance(0, 0);
+                }
                 editBlackBoard = new EditBlackboard(context.getMapDisplay().getWidth(), context
-                        .getMapDisplay().getHeight(), context.worldToScreenTransform(),
+                        .getMapDisplay().getHeight(), toScreenTransform,
                         layerToMapTransform);
 
                 final EditBlackboard bb = editBlackBoard;
