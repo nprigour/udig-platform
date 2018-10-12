@@ -8,6 +8,7 @@ Bundle-Vendor: uDig Community
 Bundle-Localization: plugin
 Export-Package: org.locationtech.udig.tools.arc,
  org.locationtech.udig.tools.arc.internal;x-friends:="org.locationtech.udig.tools.tests",
+ org.locationtech.udig.tools.clip,
  org.locationtech.udig.tools.feature.util,
  org.locationtech.udig.tools.geometry.merge;x-friends:="org.locationtech.udig.tools.tests",
  org.locationtech.udig.tools.geometry.split;x-friends:="org.locationtech.udig.tools.tests",
