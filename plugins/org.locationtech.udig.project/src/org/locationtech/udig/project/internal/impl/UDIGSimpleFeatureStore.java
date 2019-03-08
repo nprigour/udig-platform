@@ -12,9 +12,14 @@ package org.locationtech.udig.project.internal.impl;
 
 import java.awt.RenderingHints.Key;
 import java.io.IOException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.locationtech.udig.project.ILayer;
 import org.locationtech.udig.project.Interaction;
@@ -24,8 +29,18 @@ import org.locationtech.udig.project.internal.EditManager;
 import org.locationtech.udig.project.internal.Messages;
 import org.locationtech.udig.project.internal.ProjectPlugin;
 import org.locationtech.udig.ui.PlatformGIS;
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.FeatureEvent;
@@ -40,6 +55,7 @@ import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
+import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.feature.Feature;
 import org.opengis.feature.FeatureVisitor;
@@ -245,6 +261,7 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
     public void editComplete() {
         wrapped.setTransaction(Transaction.AUTO_COMMIT);
     }
+    
     /**
      * Called when any method that may modify feature content is used.
      * <p>
@@ -378,8 +395,90 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
 	        
 	        return ids;
 	    } catch (Exception e) {
+	    	try {
+				if (e.getCause().getMessage().contains("Data truncation: Incorrect datetime value: '1970-01-01")) {
+					FeatureIterator<SimpleFeature> iter = null; 
+					try {
+						long time = System.currentTimeMillis();
+						iter = features.features();
+						while (iter.hasNext()) {
+							SimpleFeature f = iter.next();
+							for (int i = 0; i < f.getAttributeCount(); i++) {
+								if (Objects.equals(f.getAttribute(i), new Timestamp(0))) {
+									f.setAttribute(i, new Timestamp(time));
+								}
+							}   
+						}
+					} finally {
+						if (iter != null) {
+							iter.close();
+						}
+					}
+					List<FeatureId> ids = wrapped.addFeatures(features);
+					FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+					Id filter = ff.id( new HashSet<FeatureId>( ids ) );
+					fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, Filter.INCLUDE );
+					return ids;
+				} else if (SQLIntegrityConstraintViolationException.class.isAssignableFrom(e.getCause().getClass())) {
+					//do not proceed if more than one features is added.
+					//That is because in that case we are not sure which
+					//feature has the actual problem.
+					if (features.size() > 1) {
+						throw e;
+					}
+					//check the message cause to determine the attribute that has problem
+					Pattern pattern = Pattern.compile("Duplicate entry '(\\p{Alnum}{12,20})' for key '([a-zA-Z][a-zA-Z0-9_]*)'", Pattern.CASE_INSENSITIVE);
+			        Matcher matcher = pattern.matcher(e.getCause().getMessage());
+			        if (matcher.matches()) {
+			        	FeatureIterator<SimpleFeature> iter = null; 
+			        	try {
+			        		iter = features.features();
+			        		while (iter.hasNext()) {
+			        			SimpleFeature f = iter.next();
+
+			        			String value = matcher.group(1);
+			        			String key = matcher.group(2);
+			        			String newValue[] = new String[1]; 
+			        			PlatformGIS.syncInDisplayThread(new Runnable() {
+			        				@Override
+			        				public void run() {
+			        					SimpleTextDialog dialog = new SimpleTextDialog(new Shell(), 
+			        							"Duplicate entry detected for attribute: " + key + ". Please provide another value:", false) {
+
+			        						@Override
+			        						protected void initData() {
+			        							text.setText(value);
+			        						}
+
+			        					};
+			        					if (dialog.open() == Dialog.OK) {
+			        						newValue[0] = dialog.getText();
+			        					}
+			        				}               
+			        			});
+			        			if (!Objects.equals(value, newValue[0])) {
+			        				f.setAttribute(key, newValue[0]);
+			        			}
+
+			        		}
+			        	} finally {
+							if (iter != null) {
+								iter.close();
+							}
+						}
+						List<FeatureId> ids = wrapped.addFeatures(features);
+						FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+						Id filter = ff.id( new HashSet<FeatureId>( ids ) );
+						fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, Filter.INCLUDE );
+						return ids;
+			        }
+	    
+				}
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			} 
 	    	handleException(e);
-			throw e;
+	    	throw e;
 	    }
     }
 
@@ -451,5 +550,135 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
             value = geom;
         }
 		return value;
+	}
+	
+	
+	private class SimpleTextDialog extends Dialog {
+
+		//attributes required to support nullify operation.
+		protected Button unsetCheckbox; 
+		private boolean shouldNullify = false;
+		private boolean allowNullOption;
+
+		// a description title for the Dialog
+		private String description;
+
+		//the Date swt widget
+		protected Text text;
+		
+		private String textValue;
+
+		/**
+		 * Create the dialog
+		 * 
+		 * @param parent
+		 */
+		public SimpleTextDialog(Shell parent, String subject) {
+			this(parent, subject, false);
+			description = subject;
+		}
+
+		/**
+		 * Create the dialog with null option enabled
+		 * 
+		 * @param parent
+		 */
+		public SimpleTextDialog(Shell parent, String subject, boolean allowNullOPtion) {
+			super(parent);
+			description = subject;
+			this.allowNullOption=allowNullOPtion;
+		}
+
+
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
+		 */
+		protected void configureShell(Shell newShell) {
+			super.configureShell(newShell);
+		}
+
+		@Override
+		public void create() {
+			setShellStyle(SWT.RESIZE|SWT.DIALOG_TRIM|SWT.CLOSE);
+			super.create();
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
+		 */
+		protected Control createDialogArea(Composite parent) {
+
+			Composite client = (Composite) super.createDialogArea(parent);
+			Composite container = new Composite(client, SWT.NONE);
+			container.setLayoutData(new GridData(GridData.FILL_BOTH));
+			container.setLayout(new GridLayout(1, false));
+			if (description != null) {
+				Label lbl = new Label(container, SWT.NULL);
+				lbl.setText(description);
+			}
+			
+			//text = new Text(container, SWT.BORDER|SWT.MULTI|SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
+			text = new Text(container, SWT.BORDER);
+			text.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
+			((GridData)text.getLayoutData()).minimumWidth=200;
+			//((GridData)text.getLayoutData()).heightHint=150;
+			
+			/*
+			GridData gd = new GridData();
+			gd.horizontalSpan = 2;
+			gd.horizontalAlignment = SWT.CENTER;
+			gd.verticalAlignment = SWT.CENTER;
+			text.setLayoutData(gd);
+			 */
+			
+			if (allowNullOption) {
+				unsetCheckbox = new Button(client, SWT.CHECK);
+				unsetCheckbox.setText("unset value");
+				unsetCheckbox.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+			}
+			
+			initData();
+			return client;
+		}
+
+		@Override
+		protected Point getInitialSize() {
+			return new Point(450, 200);
+		}	
+		
+		/**
+		 * Override to provide for a default value
+		 */
+		protected void initData() {
+			
+		}
+
+		/**
+		 * sets the selected value into result and closes the dialog
+		 */
+		@Override
+		protected void okPressed() {
+			if (unsetCheckbox != null && unsetCheckbox.getSelection()) {
+				shouldNullify = true;
+			} else {
+				textValue = text.getText();
+			}
+			super.okPressed();
+		}
+
+		/**
+		 * @return the selected dateValue as calendar in the current time zone or the time zone of the
+		 *         calendar passed with last {@link #setDate(Calendar)}
+		 */
+		public String getText() {
+			return textValue;
+		}
+
+		public boolean shouldNullify() {
+			return shouldNullify;
+		}
+
+
 	}
 }
