@@ -10,7 +10,6 @@
 package org.locationtech.udig.project.ui.internal.commands.draw;
 
 import java.awt.Color;
-import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
@@ -44,14 +43,13 @@ public class DrawCoordinateCommand extends AbstractDrawCommand {
 
     private Coordinate coord;
 
+    private Color paintColor = null;
 
-    private Color paint = null;
+    private int lineStyle = -1;
 
-    private int style = -1;
+    private int lineWidth = 1;
 
-    private int width;
-
-    private Color fill;
+    private Color fillColor;
 
     private boolean useCircle;
     
@@ -94,15 +92,16 @@ public class DrawCoordinateCommand extends AbstractDrawCommand {
         Shape shape = useCircle ? new Ellipse2D.Double(point.x, point.y, 3, 3) : 
             new Rectangle2D.Double(point.x, point.y, 3, 3);
         
-        if (fill != null) {
-            graphics.setColor(fill);
+        if (fillColor != null) {
+            graphics.setColor(fillColor);
             graphics.fill(shape);
         }
 
-        if (paint != null)
-            graphics.setColor(paint);
-        if (style > -1)
-            graphics.setStroke(style, width);
+        if (paintColor != null)
+            graphics.setColor(paintColor);
+        if (lineStyle > -1)
+            graphics.setStroke(lineStyle, lineWidth);
+
         doDraw(shape);
     }
 
@@ -129,42 +128,45 @@ public class DrawCoordinateCommand extends AbstractDrawCommand {
     }
 
     /**
-     * @return Returns the paint.
+     * Paint color to set for coordinate painting
+     * @param paintColor
      */
-    public Color getPaint() {
-        return paint;
+    public void setPaintColor(Color paintColor) {
+        this.paintColor = paintColor;
     }
 
     /**
-     * @param paint The paint to set.
+     * @return Currently set color to paint with. May be null
      */
-    public void setPaint(Color paint) {
-        this.paint = paint;
+    public Color getPaintColor() {
+        return paintColor;
     }
 
     /**
      * @return Returns the line style.
      */
     public int getLineStyle() {
-        return style;
+        return lineStyle;
     }
 
     /**
      * @return Returns the line width.
      */
     public int getLineWidth() {
-        return width;
+        return lineWidth;
     }
 
     /**
      * Sets the line style
      * 
-     * @param lineStyle the style of the line
+     * @param lineStyle the style of the line, see constants in ViewportGraphics
      * @param lineWidth the width of the line
      */
     public void setStroke(int lineStyle, int lineWidth) {
-        this.style = lineStyle;
-        this.width = lineWidth;
+        this.lineStyle = lineStyle;
+        if (lineWidth >= 1) {
+            this.lineWidth = lineWidth;
+        }
     }
 
     /**
@@ -174,7 +176,7 @@ public class DrawCoordinateCommand extends AbstractDrawCommand {
      * @param fillColor a color to be used to fill the shapeor null.
      */
     public void setFill(Color fillColor) {
-        this.fill = fillColor;
+        this.fillColor = fillColor;
     }
 
 
@@ -237,4 +239,7 @@ public class DrawCoordinateCommand extends AbstractDrawCommand {
         dispose();
     }
 
+    public CoordinateReferenceSystem getCrs() {
+        return crs;
+    }
 }
