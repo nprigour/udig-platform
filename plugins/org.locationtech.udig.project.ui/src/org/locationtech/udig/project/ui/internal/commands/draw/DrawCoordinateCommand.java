@@ -101,6 +101,7 @@ public class DrawCoordinateCommand extends AbstractDrawCommand {
             graphics.setColor(paintColor);
         if (lineStyle > -1)
             graphics.setStroke(lineStyle, lineWidth);
+
         doDraw(shape);
     }
 
