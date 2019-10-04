@@ -11,10 +11,15 @@
 package org.locationtech.udig.tools.feature.split;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.swt.widgets.Shell;
 import org.geotools.data.DataUtilities;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -25,11 +30,17 @@ import org.opengis.referencing.operation.TransformException;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineString;
 
+import org.locationtech.udig.project.ui.internal.ProjectUIPlugin;
+import org.locationtech.udig.project.ui.preferences.PreferenceConstants;
+import org.locationtech.udig.tools.Activator;
 import org.locationtech.udig.tools.feature.util.GeoToolsUtils;
 import org.locationtech.udig.tools.geometry.internal.util.GeometryUtil;
 import org.locationtech.udig.tools.geometry.split.SplitStrategy;
 import org.locationtech.udig.tools.geometry.split.VertexStrategy;
 import org.locationtech.udig.tools.internal.i18n.Messages;
+import org.locationtech.udig.tools.internal.ui.util.DialogUtil;
+import org.locationtech.udig.tools.preferences.SplitToolPreferencePage;
+import org.locationtech.udig.ui.PlatformGIS;
 
 /**
  * <p>
@@ -198,6 +209,24 @@ public final class SplitFeatureBuilder {
 	}
 
 	/**
+	 * Print information of the features contained in the list.
+	 * 
+	 * @param featureList
+	 *            A list of features.
+	 * @return An string containing information about all those features.
+	 */
+	private static String prettyPrintArea(List<SimpleFeature> featureList) {
+
+		StringBuilder strBuilder = new StringBuilder("\n"); //$NON-NLS-1$
+		strBuilder.append("Feature Id	-->	Geometry Area: ").append("\n");
+		for (SimpleFeature f : featureList) {
+			strBuilder.append(f.getID()) //$NON-NLS-1$
+					.append(" -->	").append(((Geometry) f.getDefaultGeometry()).getArea()).append("\n"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		return strBuilder.toString();
+	}
+	
+	/**
 	 * Analyze the feature list, and for those features that can suffer split
 	 * operation, they'll be split.
 	 * 
@@ -231,6 +260,38 @@ public final class SplitFeatureBuilder {
 			}
 			if (!existSplit) {
 			        throw new CannotSplitException(Messages.SplitFeatureBuilder_cannotSplit);
+			} else {
+				//obtain areaMargin from preferences 
+				final double areaMargin = Double.valueOf(
+						Platform.getPreferencesService().getString(
+								Activator.PLUGIN_ID, 
+								SplitToolPreferencePage.SPLIT_TOOL_AREA_MARGIN_WARNING, 
+								"1",
+								null
+								)).doubleValue();
+				boolean geomBelowMargin = false;
+				for (SimpleFeature f : splitResultList) {
+					if (((Geometry) f.getDefaultGeometry()).getArea() < areaMargin) {
+						geomBelowMargin = true;
+						break;
+					};
+				}
+				if (geomBelowMargin) {
+					boolean confirmCreation[] = {false};
+					PlatformGIS.syncInDisplayThread(new Runnable() {
+        				@Override
+        				public void run() {
+        					confirmCreation[0] = DialogUtil.openConfirm("split command", "Geometries with area < " + areaMargin + 
+        							" will be created:" + prettyPrintArea(splitResultList) + " Do you want to continue?");
+        					
+        				}               
+        			});
+					if (!confirmCreation[0]) {
+						throw new SplitFeatureBuilderFailException("Splitting cancelled by the user");
+					}
+				}
+					
+					
 			}
 		} catch (OperationNotFoundException e) {
 			throw makeFailException(e);
