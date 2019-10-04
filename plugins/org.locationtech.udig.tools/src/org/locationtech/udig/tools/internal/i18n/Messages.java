@@ -321,6 +321,10 @@ public class Messages extends NLS {
     public static String TrimGeometryStrategy_point_not_on_line;
 
     public static String TrimGeometryStrategy_trimming_line_intersect_one_point;
+
+	public static String Split_Title;
+
+	public static String Split_Description;
     
     
     static {

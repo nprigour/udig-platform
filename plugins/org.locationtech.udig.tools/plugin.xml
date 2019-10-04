@@ -213,5 +213,20 @@
          </viewShortcut>
       </perspectiveExtension>
    </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="org.locationtech.udig.tools.preferences.SplitToolPreferenceInitializer">
+      </initializer>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="org.locationtech.udig.project.ui.preferences.tool"
+            class="org.locationtech.udig.tools.preferences.SplitToolPreferencePage"
+            id="org.locationtech.udig.tool.split.page"
+            name="%split.page">
+      </page>
+   </extension>
 
 </plugin>
