@@ -277,7 +277,7 @@ public final class SplitFeatureBuilder {
 					};
 				}
 				if (geomBelowMargin) {
-					boolean confirmCreation[] = {false};
+					final boolean confirmCreation[] = {false};
 					PlatformGIS.syncInDisplayThread(new Runnable() {
         				@Override
         				public void run() {
