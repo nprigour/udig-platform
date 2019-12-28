@@ -66,8 +66,14 @@ public abstract class AbstractModalTool extends AbstractTool implements ModalToo
     }
 
     public void setActive( boolean active ) {
-        this.active=active;
 
+		boolean oldValue = isActive();
+		
+		boolean tempNotify = isNotifyListeners();
+		setNotifyListeners(false);
+		this.active=active;
+		setNotifyListeners(tempNotify);
+		
         setStatusBarMessage(active);
         if (!active) {
             deregisterMouseListeners();
@@ -76,6 +82,11 @@ public abstract class AbstractModalTool extends AbstractTool implements ModalToo
         		registerMouseListeners();
         	}
         }
+        
+		if(isNotifyListeners() && oldValue != active){
+			ToolLifecycleEvent event = new ToolLifecycleEvent(this, ToolLifecycleEvent.Type.ACTIVE, active, oldValue);
+			fireEvent(event);
+		}
     }
 
     public boolean isActive() {
