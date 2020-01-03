@@ -56,7 +56,7 @@ import org.eclipse.ui.part.ViewPart;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 /**
  * This view shows the features to clip.

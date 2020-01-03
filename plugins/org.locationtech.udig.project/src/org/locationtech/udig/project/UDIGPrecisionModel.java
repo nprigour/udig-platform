@@ -1,7 +1,7 @@
 package org.locationtech.udig.project;
 
-import com.vividsolutions.jts.geom.PrecisionModel;
-import com.vividsolutions.jts.precision.GeometryPrecisionReducer;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jts.precision.GeometryPrecisionReducer;
 
 /**
  * Can be used to obtain an appropriate PrecisionModel (and associated

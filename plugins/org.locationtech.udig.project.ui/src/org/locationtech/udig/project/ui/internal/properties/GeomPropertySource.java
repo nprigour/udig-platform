@@ -9,6 +9,9 @@
  */
 package org.locationtech.udig.project.ui.internal.properties;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.MenuManager;
@@ -46,6 +49,9 @@ import org.eclipse.ui.views.properties.IPropertyDescriptor;
 import org.eclipse.ui.views.properties.IPropertySource2;
 import org.eclipse.ui.views.properties.PropertyDescriptor;
 import org.eclipse.ui.views.properties.TextPropertyDescriptor;
+import org.geotools.geometry.jts.Geometries;
+import org.geotools.geometry.jts.JTSFactoryFinder;
+import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -59,10 +65,6 @@ import org.locationtech.udig.project.command.factory.EditCommandFactory;
 import org.locationtech.udig.project.ui.ApplicationGIS;
 import org.locationtech.udig.project.ui.internal.Messages;
 import org.locationtech.udig.ui.BasicTypeCellEditor;
-
-import org.geotools.factory.Hints;
-import org.geotools.geometry.jts.Geometries;
-import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.opengis.feature.simple.SimpleFeature;
 
 /**

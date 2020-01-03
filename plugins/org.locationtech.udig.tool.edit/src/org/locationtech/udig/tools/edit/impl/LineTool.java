@@ -13,10 +13,13 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Set;
 
-import javax.measure.Measure;
+import javax.measure.Quantity;
 import javax.measure.quantity.Length;
-import javax.measure.unit.NonSI;
-import javax.measure.unit.SI;
+import si.uom.SI;
+import systems.uom.common.USCustomary;
+
+import tec.uom.se.quantity.Quantities;
+import tec.uom.se.unit.MetricPrefix;
 
 import org.locationtech.udig.catalog.util.CRSUtil;
 import org.locationtech.udig.project.ui.render.displayAdapter.MapMouseEvent;
@@ -212,40 +215,40 @@ public class LineTool extends AbstractEditTool {
             units = org.locationtech.udig.ui.preferences.PreferenceConstants.IMPERIAL_UNITS;
         }
 
-        final Measure<Double, Length> distanceFromInMeter = Measure.valueOf(distanceFrom, SI.METER);
+        final Quantity<Length> distanceFromInMeter = Quantities.getQuantity(distanceFrom, SI.METRE);
         
-        Measure<Double, Length> resultFrom = null;
+        Quantity<Length> resultFrom = null;
         if (units.equals( org.locationtech.udig.ui.preferences.PreferenceConstants.IMPERIAL_UNITS)){
             
-        	Measure<Double, Length> distanceFromInMiles = distanceFromInMeter.to(NonSI.MILE);
+        	Quantity<Length> distanceFromInMiles = distanceFromInMeter.to(USCustomary.MILE);
             double distInMilesValue = distanceFromInMiles.getValue().doubleValue();
-            if (distInMilesValue > Measure.valueOf(1, NonSI.MILE).doubleValue(NonSI.MILE)) {
+            if (distInMilesValue > Quantities.getQuantity(1, USCustomary.MILE).to(USCustomary.MILE).getValue().doubleValue()) {
                 // everything longer than a mile
                 resultFrom = distanceFromInMiles;
-            } else if (distInMilesValue > Measure.valueOf(1, NonSI.FOOT).doubleValue(NonSI.MILE)) {
+            } else if (distInMilesValue > Quantities.getQuantity(1, USCustomary.FOOT).to(USCustomary.MILE).getValue().doubleValue()) {
                 // everything longer that a foot
-                resultFrom = distanceFromInMiles.to(NonSI.FOOT);
+                resultFrom = distanceFromInMiles.to(USCustomary.FOOT);
             } else {
                 // shorter than a foot
-                resultFrom = distanceFromInMiles.to(NonSI.INCH);
+                resultFrom = distanceFromInMiles.to(USCustomary.INCH);
             }
             
         } else {
             double distanceFromInMeterValue = distanceFromInMeter.getValue().doubleValue();       
-            if (distanceFromInMeterValue > Measure.valueOf(1000, SI.METER).doubleValue(SI.METER)) {
-                resultFrom = distanceFromInMeter.to(SI.KILOMETER);
-            } else if (distanceFromInMeterValue > Measure.valueOf(1, SI.METER).doubleValue(SI.METER)) {
-                resultFrom = distanceFromInMeter.to(SI.METER);
-            } else if (distanceFromInMeterValue > Measure.valueOf(1, SI.CENTIMETER).doubleValue(SI.METER)) {
-                resultFrom = distanceFromInMeter.to(SI.CENTIMETER);
+            if (distanceFromInMeterValue > Quantities.getQuantity(1000, SI.METRE).to(SI.METRE).getValue().doubleValue()) {
+                resultFrom = distanceFromInMeter.to(MetricPrefix.KILO(SI.METRE));
+            } else if (distanceFromInMeterValue > Quantities.getQuantity(1, SI.METRE).to(SI.METRE).getValue().doubleValue()) {
+                resultFrom = distanceFromInMeter.to(SI.METRE);
+            } else if (distanceFromInMeterValue > Quantities.getQuantity(1, MetricPrefix.CENTI(SI.METRE)).to(SI.METRE).getValue().doubleValue()) {
+                resultFrom = distanceFromInMeter.to(MetricPrefix.CENTI(SI.METRE));
             } else {
-                resultFrom = distanceFromInMeter.to(SI.MILLIMETER);
+                resultFrom = distanceFromInMeter.to(MetricPrefix.MILLI(SI.METRE));
             }
             
         }
 
         final String message = MessageFormat.format("Distance last segment: {0}", 
-        		round(resultFrom.getValue(), 3) + " " + resultFrom.getUnit());
+        		round(resultFrom.getValue().doubleValue(), 3) + " " + resultFrom.getUnit());
 
         getContext().updateUI(new Runnable(){
             public void run() {

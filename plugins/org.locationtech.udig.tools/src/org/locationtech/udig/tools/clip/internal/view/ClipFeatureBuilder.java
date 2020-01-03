@@ -16,15 +16,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.udig.project.ILayer;
 import org.locationtech.udig.tools.geometry.clip.ClipStrategy;
 import org.locationtech.udig.tools.geometry.internal.util.GeometryUtil;
 import org.locationtech.udig.tools.internal.i18n.Messages;
-
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
-import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.opengis.feature.Feature;
 import org.opengis.feature.IllegalAttributeException;
 import org.opengis.feature.simple.SimpleFeature;
@@ -32,13 +36,6 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.FeatureType;
 import org.opengis.feature.type.GeometryDescriptor;
-
-import com.vividsolutions.jts.geom.EmptyGeometry;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
 
 /**
  * A builder for a {@link Feature} that can be used to creates a new Feature
@@ -397,7 +394,7 @@ class ClipFeatureBuilder {
 				&& showMessageWithFeedback(Display.getDefault(), null, 
 						MessageFormat.format(Messages.ClipFeatureBuilder_dialog_clear_msg, diffs))) {
 			if (geomArray.size() == 0) {
-				resultGeom = GeometryUtil.adapt(new EmptyGeometry(), clippedGeom.getClass());
+				resultGeom = GeometryUtil.adapt(new GeometryFactory().createPolygon(), clippedGeom.getClass());
 			} else {
 				resultGeom = GeometryUtil.adapt((ArrayList<Geometry>)geomArray, clippedGeom.getClass());
 			}
@@ -471,7 +468,7 @@ class ClipFeatureBuilder {
 				}
 			}
 			if (geomArray.size() == 0) {
-				resultGeom = new EmptyGeometry();
+				resultGeom = new GeometryFactory().createPolygon();
 			}
 			if (geomArray.size() != num) {
 				resultGeom = GeometryUtil.adapt((ArrayList<Geometry>)geomArray, resultGeomClass);
@@ -486,7 +483,7 @@ class ClipFeatureBuilder {
 				}
 			}
 			if (geomArray.size() == 0) {
-				resultGeom = new EmptyGeometry();
+				resultGeom = new GeometryFactory().createPolygon();
 			}
 			if (geomArray.size() != num) {
 				resultGeom = GeometryUtil.adapt((ArrayList<Geometry>)geomArray, resultGeomClass);

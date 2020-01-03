@@ -23,7 +23,7 @@ import org.locationtech.udig.tools.clip.internal.view.ClipView;
 
 import org.opengis.feature.simple.SimpleFeature;
 
-import com.vividsolutions.jts.geom.Envelope;
+import org.locationtech.jts.geom.Envelope;
 
 /**
  * Stores the status values of clip interactions.

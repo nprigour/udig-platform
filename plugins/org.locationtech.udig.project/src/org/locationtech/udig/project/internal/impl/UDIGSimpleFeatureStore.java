@@ -182,7 +182,7 @@ public class UDIGSimpleFeatureStore implements SimpleFeatureStore, UDIGStore {
         setTransactionInternal();
         value = applyPrecisionModel(value, selectFilter);     
         try {
-	        wrapped.modifyFeatures(attribute, value, selectFilter);
+	        wrapped.modifyFeatures(attribute.getName(), value, selectFilter);
 	        fireLayerEditEvent( FeatureEvent.Type.CHANGED, null, selectFilter );
         } catch (Exception e) {
         	handleException(e);

@@ -24,7 +24,6 @@ import org.geotools.data.DataAccessFactory.Param;
 import org.geotools.data.DataAccessFinder;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.DataStoreFinder;
-import org.geotools.data.DataUtilities;
 import org.geotools.data.FileDataStoreFactorySpi;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.util.URLs;
@@ -127,7 +126,7 @@ public class DataStoreServiceExtension extends IServiceExtension {
                     params.put(param.key, url);
                 } else if (File.class.isAssignableFrom(param.type)
                         && "file".equalsIgnoreCase(url.getProtocol())) {
-                    File file = DataUtilities.urlToFile(url);
+                    File file = URLs.urlToFile(url);
                     params.put(param.key, file);
 
                 } else if (param.sample != null) {
