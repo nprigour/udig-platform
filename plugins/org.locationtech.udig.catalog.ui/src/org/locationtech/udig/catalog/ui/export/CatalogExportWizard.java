@@ -241,11 +241,12 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
 
                 ShapefileDataStore shapefile = createShapefile(destinationFeatureType, file, data.getCharset());
                 SimpleFeatureType targetFeatureType = shapefile.getSchema();
-
+                      
                 ReprojectingFeatureCollection processed = new ReprojectingFeatureCollection(fc, monitor, targetFeatureType, mt);
                 boolean success = writeToShapefile(shapefile, processed);
-
+                
                 if (success) {
+                	extraShapefileDataUpdate(data, shapefile);
                     addToCatalog(file, data);
                 } else {
                     Display.getDefault().asyncExec(new Runnable(){
@@ -496,12 +497,14 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
                                                 lineCollection, targetFeatureType, 
                                                 schema.getGeometryDescriptor(), 
                                                 mt, currentMonitor);
-
-        if (writeToShapefile(shapefile, temp))
+        
+        if (writeToShapefile(shapefile, temp)) {
+        	extraShapefileDataUpdate(data, shapefile);
             addToCatalog(lineFile, data);
+        }
     }
 
-    private void exportPointFeatures( Data data, IProgressMonitor currentMonitor, File file,
+	private void exportPointFeatures( Data data, IProgressMonitor currentMonitor, File file,
             SimpleFeatureCollection pointCollection,
             SimpleFeatureType schema, MathTransform mt )
             throws IllegalFilterException, IOException, SchemaException, MalformedURLException {
@@ -515,8 +518,10 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
                                                 schema.getGeometryDescriptor(), 
                                                 mt, currentMonitor);
 
-        if (writeToShapefile(shapefile, temp))
+        if (writeToShapefile(shapefile, temp)) {
+        	extraShapefileDataUpdate(data, shapefile);
             addToCatalog(pointFile, data);
+        }
     }
 
     private void exportPolygonFeatures( Data data, IProgressMonitor currentMonitor, File file,
@@ -532,8 +537,10 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
                 polygonCollection, targetFeatureType,
                 schema.getGeometryDescriptor(), mt, currentMonitor);
 
-        if (writeToShapefile(shapefile, temp))
+        if (writeToShapefile(shapefile, temp)) {
+        	extraShapefileDataUpdate(data, shapefile);
             addToCatalog(polyFile, data);
+        }
     }
 
     private SimpleFeatureType createFeatureType( SimpleFeatureType schema,
@@ -653,6 +660,16 @@ public class CatalogExportWizard extends WorkflowWizard implements IExportWizard
         
     }
 
+    /**
+     * does nothing. Subclasses may override to provide the logic for modifying features of the shapefile
+     * 
+     * @param data
+     * @param shapefile
+     */
+    protected void extraShapefileDataUpdate(Data data, ShapefileDataStore shapefile) {
+			
+	}
+    
     protected boolean writeToShapefile(ShapefileDataStore shapefile, SimpleFeatureCollection fc) throws IOException {
         SimpleFeatureStore featureSource = (SimpleFeatureStore) shapefile.getFeatureSource();
         List<FeatureId> ids = featureSource.addFeatures(fc);
